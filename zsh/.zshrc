@@ -1,7 +1,7 @@
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
-export ZSH=~/.oh-my-zsh
+export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="spaceship"
 plugins=(
   git
@@ -9,8 +9,8 @@ plugins=(
 )
 source $ZSH/oh-my-zsh.sh
 export EDITOR='vim'
-export PATH="$PATH:/Users/jasonamador/bin"
-export PATH="$PATH:/Users/jasonamador/.local/bin"
+export PATH="$PATH:$HOME/bin"
+export PATH="$PATH:$HOME/.local/bin"
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
@@ -37,7 +37,6 @@ fpath=($fpath "$HOME/.zfunctions")
 # ruby
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
-
 
 # bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
