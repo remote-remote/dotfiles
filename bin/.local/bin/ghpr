@@ -1,0 +1,27 @@
+#!/usr/bin/env zsh
+
+REPO_URL=${$(git config --get remote.origin.url)/.git/}
+if [[ $REPO_URL != *"github.com"* ]]; then
+  echo "Not a github repo"
+  exit
+fi
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ $BRANCH == "main" ]]; then
+  echo "Cannot create PR from main"
+  exit
+fi
+
+git fetch -p
+
+if [ -z $(git branch -r | grep "\b$BRANCH\b") ]; then
+  echo "This branch is not in remote, pushing..."
+
+  git push -u origin $BRANCH
+  if [ $? -ne 0 ]; then
+    exit
+  fi
+fi
+
+echo "Opening comparison in GitHub"
+open $REPO_URL/compare/main...$BRANCH
