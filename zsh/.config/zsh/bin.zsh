@@ -12,3 +12,8 @@ if ! command -v fzf &> /dev/null; then
   echo "Installing fzf..."
   brew install fzf
 fi
+
+if ! command -v rg &> /dev/null; then
+  echo "Installing ripgrep..."
+  brew install ripgrep
+fi
