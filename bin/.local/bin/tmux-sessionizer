@@ -1,12 +1,18 @@
 #!/usr/bin/env zsh
-#
+
+# Get the directory of the script
+SCRIPT_DIR=$(dirname "$0")
+
+# Default SESSIONIZER_DIRS
 SESSIONIZER_DIRS=(
   "$HOME"
-  "$HOME/code"
 )
 
-if [ -f ./sessionizer.conf ]; then
-  source ./sessionizer.conf
+# Source the configuration file relative to the script's location
+CONFIG_FILE="$SCRIPT_DIR/sessionizer.conf"
+
+if [ -f "$CONFIG_FILE" ]; then
+  source "$CONFIG_FILE"
 fi
 
 if [[ $# -eq 1 ]]; then
