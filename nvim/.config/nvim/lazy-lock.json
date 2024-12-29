@@ -47,6 +47,7 @@
   "rust-tools.nvim": { "branch": "master", "commit": "676187908a1ce35ffcd727c654ed68d851299d3e" },
   "scratch.vim": { "branch": "master", "commit": "adf826b1ac067cdb4168cb6066431cff3a2d37a3" },
   "tabular": { "branch": "master", "commit": "12437cd1b53488e24936ec4b091c9324cafee311" },
+  "tailwind-tools": { "branch": "master", "commit": "3703e162d819a04b128902c508276553dae0dfb8" },
   "telescope.nvim": { "branch": "master", "commit": "7011eaae0ac1afe036e30c95cf80200b8dc3f21a" },
   "tree-sitter-vimdoc": { "branch": "master", "commit": "2249c44ecd3f5cf22da3dcccfb74f816ddb29245" },
   "undotree": { "branch": "master", "commit": "56c684a805fe948936cda0d1b19505b84ad7e065" },
@@ -57,5 +58,6 @@
   "vim-markdown": { "branch": "master", "commit": "a657e697376909c41475a686eeef7fc7a4972d94" },
   "vim-tmux-navigator": { "branch": "master", "commit": "5b3c701686fb4e6629c100ed32e827edf8dad01e" },
   "vscode-js-debug": { "branch": "main", "commit": "b981789eb7aabadcc075c604aa6590f594432cbd" },
-  "which-key.nvim": { "branch": "main", "commit": "6c1584eb76b55629702716995cca4ae2798a9cca" }
+  "which-key.nvim": { "branch": "main", "commit": "6c1584eb76b55629702716995cca4ae2798a9cca" },
+  "yeet.nvim": { "branch": "master", "commit": "a471b0d7d9164d57d9344d6bc839530eb05e9241" }
 }
