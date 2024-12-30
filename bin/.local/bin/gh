@@ -1,9 +1,0 @@
-#!/usr/bin/env zsh
-
-URL=${$(git config --get remote.origin.url)/.git/}
-
-if [[ $URL == *"github.com"* ]]; then
-  open $URL
-else
-  echo "Not a github repo"
-fi
