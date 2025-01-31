@@ -17,3 +17,14 @@ if ! command -v rg &> /dev/null; then
   echo "Installing ripgrep..."
   brew install ripgrep
 fi
+
+if ! command -v tmux &> /dev/null; then
+  echo "Installing tmux..."
+  brew install tmux
+fi
+
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+  echo "Installing ohmyzsh..."
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  mv ~/.zshrc.pre-oh-my-zsh ~/.zshrc
+fi
