@@ -1,3 +1,8 @@
+if ! command -v brew &> /dev/null; then
+  echo "Installing Neovim..."
+  echo "PLACEHOLDER! NEED TO IMPLEMENT!"
+fi
+
 if ! command -v nvim &> /dev/null; then
   echo "Installing Neovim..."
   brew install neovim
