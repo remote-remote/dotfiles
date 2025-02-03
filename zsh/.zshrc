@@ -1,7 +1,5 @@
-source ~/.config/zsh/bin.zsh
-
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="spaceship"
+ZSH_THEME="agnoster"
 plugins=(
   git
 )
@@ -27,7 +25,7 @@ alias awk="gawk"
 alias gbc='git branch --merged | egrep -v "(^\*|master|main|dev)" | xargs git branch -d'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 source ~/.config/zsh/local.zsh
 source ~/.config/zsh/dev.zsh
