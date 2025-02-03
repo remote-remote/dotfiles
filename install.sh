@@ -1,6 +1,11 @@
 if ! command -v brew &> /dev/null; then
-  echo "Installing Neovim..."
-  echo "PLACEHOLDER! NEED TO IMPLEMENT!"
+  echo "Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+if [ ! -d "$HOME/.nvm" ]; then
+  echo "Installing NVM..."
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 fi
 
 if ! command -v nvim &> /dev/null; then
