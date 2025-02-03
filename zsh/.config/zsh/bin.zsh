@@ -21,6 +21,8 @@ fi
 if ! command -v tmux &> /dev/null; then
   echo "Installing tmux..."
   brew install tmux
+  git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
+  ~/.config/tmux/plugins/tpm/bin/install_plugins
 fi
 
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
