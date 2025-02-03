@@ -1,48 +1,61 @@
 return {
-	"stevearc/conform.nvim",
-	event = { "BufReadPre", "BufNewFile" },
+	{
+		"stevearc/conform.nvim",
+		event = { "BufReadPre", "BufNewFile" },
 
-	config = function()
-		local conform = require("conform")
-		conform.setup({
-			formatters_by_ft = {
-				javascript = {
-					"prettier",
+		config = function()
+			local conform = require("conform")
+			conform.setup({
+				formatters_by_ft = {
+					javascript = {
+						"prettier",
+					},
+					json = {
+						"prettier",
+					},
+					vue = {
+						"prettier",
+					},
+					typescript = {
+						"prettier",
+					},
+					markdown = {
+						"prettier",
+					},
+					lua = {
+						"stylua",
+					},
+					python = {
+						"black",
+					},
+					ruby = {
+						"rubocop",
+					},
+					sass = {
+						"prettier",
+					},
 				},
-				json = {
-					"prettier",
+				format_on_save = {
+					lsp_fallback = true,
+					async = false,
+					timeout = 1000,
 				},
-				vue = {
-					"prettier",
-				},
-				typescript = {
-					"prettier",
-				},
-				markdown = {
-					"prettier",
-				},
-				lua = {
+			})
+
+			-- 		vim.keymap.set({
+			-- 			{ "n", "<leader>mp", "<cmd>lua require('conform').format()<cr>" },
+			-- 		})
+		end,
+	},
+	{
+		"zapling/mason-conform.nvim",
+		config = function()
+			require("mason-conform").setup({
+				ensure_installed = {
 					"stylua",
-				},
-				python = {
-					"black",
-				},
-				ruby = {
-					"rubocop",
-				},
-				sass = {
 					"prettier",
 				},
-			},
-			format_on_save = {
-				lsp_fallback = true,
-				async = false,
-				timeout = 1000,
-			},
-		})
-
-		-- 		vim.keymap.set({
-		-- 			{ "n", "<leader>mp", "<cmd>lua require('conform').format()<cr>" },
-		-- 		})
-	end,
+			})
+		end,
+	},
 }
