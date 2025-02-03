@@ -33,6 +33,17 @@ return {
 		end,
 	},
 	{
+		{
+			"suketa/nvim-dap-ruby",
+			dependencies = {
+				"mfussenegger/nvim-dap",
+			},
+			config = function()
+				require("dap-ruby").setup()
+			end,
+		},
+	},
+	{
 		"mxsdev/nvim-dap-vscode-js",
 		dependencies = {
 			"mfussenegger/nvim-dap",
@@ -44,6 +55,10 @@ return {
 				log_console_level = vim.log.levels.DEBUG,
 			})
 
+			vim.keymap.set("n", "<leader>db", function()
+				require("dap").toggle_breakpoint()
+			end)
+
 			for _, language in ipairs({ "typescript", "javascript" }) do
 				require("dap").configurations[language] = {
 					{
@@ -53,6 +68,17 @@ return {
 						program = "${file}",
 						cwd = vim.fn.getcwd(),
 						port = 9229,
+					},
+					{
+						type = "pwa-node",
+						request = "launch",
+						name = "Launch Test Program (pwa-node with vitest)",
+						cwd = vim.fn.getcwd(),
+						program = "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+						args = { "run", "${file}" }, -- "--config", "${workspaceFolder}/vitest.workspace.ts" },
+						autoAttachChildProcesses = true,
+						smartStep = true,
+						skipFiles = { "<node_internals>/**", "node_modules/**" },
 					},
 				}
 			end

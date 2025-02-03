@@ -16,7 +16,7 @@ return {
 				"volar",
 				"lua_ls",
 				"elixirls",
-				-- "ruby_lsp",
+				"ruby_lsp",
 				"rust_analyzer",
 				"pylsp",
 			},
