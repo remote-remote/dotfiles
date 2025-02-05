@@ -6,6 +6,7 @@ fi
 if [ ! -d "$HOME/.nvm" ]; then
   echo "Installing NVM..."
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+  # install a node version
 fi
 
 if ! command -v nvim &> /dev/null; then

@@ -21,3 +21,10 @@ vim.o.listchars = "eol:¬,tab:>·,trail:~,extends:>,precedes:<,space:␣"
 
 vim.opt.termguicolors = true
 vim.cmd.colorscheme("kanagawa")
+
+vim.filetype.add({
+	extension = {
+		http = "http",
+		jbuilder = "ruby",
+	},
+})
