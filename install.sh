@@ -1,7 +1,5 @@
 #!/bin/zsh
 
-if [
-
 if ! command -v brew &> /dev/null; then
   echo "Installing Homebrew..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -43,5 +41,13 @@ fi
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   echo "Installing ohmyzsh..."
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  source ~/.zshrc
   mv ~/.zshrc.pre-oh-my-zsh ~/.zshrc
+fi
+
+ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
+
+if [ ! -d "$ZSH_CUSTOM/themes/spaceship-prompt" ]; then 
+  git clone https://github.com/spaceship-prompt/spaceship-prompt.git "$ZSH_CUSTOM/themes/spaceship-prompt" --depth=1
+  ln -s "$ZSH_CUSTOM/themes/spaceship-prompt/spaceship.zsh-theme" "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
 fi
