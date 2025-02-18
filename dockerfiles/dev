@@ -14,5 +14,14 @@ RUN dpkg-reconfigure -f noninteractive tzdata && \
     sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
     update-locale LANG=en_US.UTF-8
-ARG SETUP_ARG=all
 COPY .. /root/dotfiles
+
+# Set zsh as the default shell for the root user
+RUN chsh -s /usr/bin/zsh root
+
+# Make install.sh executable and run it
+RUN chmod +x /root/dotfiles/scripts/install.sh
+RUN /root/dotfiles/scripts/install.sh || cat /root/dotfiles/scripts/install.log
+
+# Set entrypoint to launch zsh in interactive mode
+ENTRYPOINT ["/usr/bin/zsh"]

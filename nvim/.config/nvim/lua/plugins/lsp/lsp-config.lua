@@ -143,14 +143,6 @@ return {
 			on_attach = on_attach,
 		})
 
-		-- lspconfig["rubocop"].setup({
-		-- 	capabilities = capabilities,
-		-- 	filetypes = { "ruby" },
-		-- 	on_attach = on_attach,
-		-- 	cmd = { "rubocop", "--lsp" },
-		-- 	root_dir = lspconfig.util.root_pattern("Gemfile", ".git"),
-		-- })
-
 		lspconfig["rust_analyzer"].setup({
 			capabilities = capabilities,
 			on_attach = on_attach,
@@ -167,17 +159,6 @@ return {
 			on_attach = on_attach,
 			cmd = { "elixir-ls" },
 		})
-
-		-- lspconfig["volar"].setup({
-		-- 	capabilities = capabilities,
-		-- 	filetypes = {},
-		-- 	on_attach = on_attach,
-		-- 	init_options = {
-		-- 		vue = {
-		-- 			hybridMode = false,
-		-- 		},
-		-- 	},
-		-- })
 
 		local mason_packages = vim.fn.stdpath("data") .. "/mason/packages"
 		local volar_path = mason_packages .. "/vue-language-server/node_modules/@vue/language-server"

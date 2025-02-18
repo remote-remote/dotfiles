@@ -5,36 +5,38 @@ return {
 
 		config = function()
 			local conform = require("conform")
-			conform.setup({
-				formatters_by_ft = {
-					javascript = {
-						"prettier",
-					},
-					json = {
-						"prettier",
-					},
-					vue = {
-						"prettier",
-					},
-					typescript = {
-						"prettier",
-					},
-					markdown = {
-						"prettier",
-					},
-					lua = {
-						"stylua",
-					},
-					python = {
-						"black",
-					},
-					ruby = {
-						"rubocop",
-					},
-					sass = {
-						"prettier",
-					},
+			local formatters = {
+				javascript = {
+					"prettier",
 				},
+				json = {
+					"prettier",
+				},
+				vue = {
+					"prettier",
+				},
+				typescript = {
+					"prettier",
+				},
+				markdown = {
+					"prettier",
+				},
+				lua = {
+					"stylua",
+				},
+				python = {
+					"black",
+				},
+				sass = {
+					"prettier",
+				},
+			}
+			if vim.fn.executable("rubocop") == 1 then
+				formatters.ruby = { "rubocop" }
+			end
+
+			conform.setup({
+				formatters_by_ft = formatters,
 				format_on_save = {
 					lsp_fallback = true,
 					async = false,
@@ -50,11 +52,15 @@ return {
 	{
 		"zapling/mason-conform.nvim",
 		config = function()
+			local ensure_installed = {
+				"stylua",
+			}
+			if vim.fn.executable("node") then
+				table.insert(ensure_installed, "prettier")
+			end
 			require("mason-conform").setup({
-				ensure_installed = {
-					"stylua",
-					"prettier",
-				},
+				ensure_installed = ensure_installed,
+				automatic_installation = true,
 			})
 		end,
 	},

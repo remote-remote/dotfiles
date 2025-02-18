@@ -8,12 +8,6 @@ export EDITOR='nvim'
 export PATH="$PATH:$HOME/bin"
 export PATH="$PATH:$HOME/.local/bin"
 
-# Node Version Control
-export NVM_SYMLINK_CURRENT=true
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
 autoload -U +X bashcompinit && bashcompinit
 
 fpath=($fpath "$HOME/.zfunctions")
@@ -29,3 +23,4 @@ alias gbc='git branch --merged | egrep -v "(^\*|master|main|dev)" | xargs git br
 
 source ~/.config/zsh/local.zsh
 source ~/.config/zsh/dev.zsh
+
