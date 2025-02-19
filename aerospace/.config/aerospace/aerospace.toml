@@ -21,7 +21,7 @@ enable-normalization-opposite-orientation-for-nested-containers = true
 # See: https://nikitabobko.github.io/AeroSpace/guide#layouts
 # The 'accordion-padding' specifies the size of accordion padding
 # You can set 0 to disable the padding feature
-accordion-padding = 30
+accordion-padding = 10
 
 # Possible values: tiles|accordion
 default-root-container-layout = 'tiles'
@@ -98,20 +98,27 @@ alt-slash = 'layout tiles horizontal vertical'
 alt-comma = 'layout accordion horizontal vertical'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#focus
-alt-shift-h = 'focus left'
-alt-shift-j = 'focus down'
-alt-shift-k = 'focus up'
-alt-shift-l = 'focus right'
+ctrl-h = 'focus left'
+ctrl-j = 'focus down'
+ctrl-k = 'focus up'
+ctrl-l = 'focus right'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#move
-ctrl-alt-shift-h = 'move left'
-ctrl-alt-shift-j = 'move down'
-ctrl-alt-shift-k = 'move up'
-ctrl-alt-shift-l = 'move right'
+ctrl-alt-h = 'move left'
+ctrl-alt-j = 'move down'
+ctrl-alt-k = 'move up'
+ctrl-alt-l = 'move right'
 
-# See: https://nikitabobko.github.io/AeroSpace/commands#resize
-alt-shift-minus = 'resize smart -50'
-alt-shift-equal = 'resize smart +50'
+# TODO: figure out how to do this like tmux
+alt-h = 'resize width -50'
+alt-j = 'resize height +50'
+alt-k = 'resize height -50'
+alt-l = 'resize width +50'
+
+ctrl-shift-h = ['join-with left', 'mode main']
+ctrl-shift-j = ['join-with down', 'mode main']
+ctrl-shift-k = ['join-with up', 'mode main']
+ctrl-shift-l = ['join-with right', 'mode main']
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace
 ctrl-1 = 'workspace 1'
@@ -124,7 +131,7 @@ ctrl-7 = 'workspace 7'
 ctrl-8 = 'workspace 8'
 ctrl-9 = 'workspace 9'
 ctrl-b = 'workspace B'
-ctrl-t = 'workspace T'
+ctrl-t = ['mode terminal', 'workspace T']
 ctrl-p = 'workspace P'
 ctrl-z = 'workspace Z'
 
@@ -159,11 +166,17 @@ r = ['flatten-workspace-tree', 'mode main'] # reset layout
 f = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling layout
 backspace = ['close-all-windows-but-current', 'mode main']
 
-# sticky is not yet supported https://github.com/nikitabobko/AeroSpace/issues/2
-#s = ['layout sticky tiling', 'mode main']
-
-alt-shift-h = ['join-with left', 'mode main']
-alt-shift-j = ['join-with down', 'mode main']
-alt-shift-k = ['join-with up', 'mode main']
-alt-shift-l = ['join-with right', 'mode main']
-
+[mode.terminal.binding]
+ctrl-1 = ['workspace 1', 'mode main']
+ctrl-2 = ['workspace 2', 'mode main']
+ctrl-3 = ['workspace 3', 'mode main']
+ctrl-4 = ['workspace 4', 'mode main']
+ctrl-5 = ['workspace 5', 'mode main']
+ctrl-6 = ['workspace 6', 'mode main']
+ctrl-7 = ['workspace 7', 'mode main']
+ctrl-8 = ['workspace 8', 'mode main']
+ctrl-9 = ['workspace 9', 'mode main']
+ctrl-b = ['workspace B', 'mode main']
+ctrl-p = ['workspace P', 'mode main']
+ctrl-z = ['workspace Z', 'mode main']
+ctrl-t = ['mode main']
