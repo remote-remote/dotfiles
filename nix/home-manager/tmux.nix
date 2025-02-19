@@ -19,6 +19,10 @@
   # plain files is through 'home.file'.
   home.file = {
     ".config/kitty/kitty.conf".source = ../../kitty/with-tmux.conf;
+    ".config/kitty/navigator.py".source = ../../kitty/navigator.py;
+    ".config/kitty/sessionizer/session.py".source = ../../kitty/sessionizer/session.py;
+    ".config/kitty/resizer.py".source = ../../kitty/resizer.py;
+    ".config/kitty/kitty-themes".source = ../../kitty/kitty-themes;
   };
 
   # Home Manager can also manage your environment variables through

@@ -14,16 +14,12 @@
     # Home Manager is pretty good at managing dotfiles. The primary way to manage
     # plain files is through 'home.file'.
     file = {
-    # # Building this configuration will create a copy of 'dotfiles/screenrc' in
-    # # the Nix store. Activating the configuration will then make '~/.screenrc' a
-    # # symlink to the Nix store copy.
-    # ".screenrc".source = dotfiles/screenrc;
-
-    # # You can also set the file content immediately.
-    # ".gradle/gradle.properties".text = ''
-    #   org.gradle.console=verbose
-    #   org.gradle.daemon.idletimeout=3600000
-    # '';
+    # kitty
+      ".config/kitty/kitty.conf".source = ../../kitty/no-tmux.conf;
+      ".config/kitty/navigator.py".source = ../../kitty/navigator.py;
+      ".config/kitty/sessionizer/session.py".source = ../../kitty/sessionizer/session.py;
+      ".config/kitty/resizer.py".source = ../../kitty/resizer.py;
+      ".config/kitty/kitty-themes".source = ../../kitty/kitty-themes;
     };
 
   # Home Manager can also manage your environment variables through
