@@ -105,7 +105,9 @@ def load_main(args, opts):
 
 
 def load_project(boss, path, dir):
-    with open(f"{os.path.expanduser('~')}/.config/kitty/meow/history", "a") as history:
+    with open(
+        f"{os.path.expanduser('~')}/.config/kitty/sessionizer/history", "a"
+    ) as history:
         history.write(f"{dir} {datetime.now().isoformat()}\n")
         history.close()
 
