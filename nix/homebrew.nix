@@ -13,7 +13,7 @@
       "aerospace"
       "spotify"
       "brave-browser"
-      # "bartender"
+      "kitty"
     ];
     taps = [
       "nikitabobko/tap"

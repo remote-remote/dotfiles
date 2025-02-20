@@ -7,7 +7,12 @@
 
     # maybe I should not have kitty here, but in the system config?
     # but this is dependent on it...
-    packages = [pkgs.neovim pkgs.kitty];
+    packages = with pkgs; [
+      zsh
+      gawk
+      fzf
+      ripgrep
+    ];
 
     file = {
       ".config/kitty/kitty-themes".source = ../../kitty/kitty-themes;

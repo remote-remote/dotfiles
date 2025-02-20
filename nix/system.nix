@@ -3,12 +3,8 @@
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   environment.systemPackages = with pkgs;
-    [ 
-      zsh
-      gawk
-      fzf
-      ripgrep
-    ];
+    [ neovim nodejs_22 ];
+
 
   system.defaults = {
     loginwindow.LoginwindowText = "remote.remote";

@@ -54,6 +54,7 @@
         configuration 
         ./system.nix
         ./homebrew.nix
+
         nix-homebrew.darwinModules.nix-homebrew
       ];
     };
