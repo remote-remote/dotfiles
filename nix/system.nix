@@ -1,13 +1,15 @@
-{ pkgs, ... }:
+{ pkgs, username, ... }:
 {
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   environment.systemPackages = with pkgs;
-    [ neovim nodejs_22 ];
+    [ 
+      zsh
+    ];
 
 
   system.defaults = {
-    loginwindow.LoginwindowText = "remote.remote";
+    loginwindow.LoginwindowText = "${username}";
     screencapture.location = "~/Pictures/screenshots";
     screensaver.askForPasswordDelay = 10;
     NSGlobalDomain = {

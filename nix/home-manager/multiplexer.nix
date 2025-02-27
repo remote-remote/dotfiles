@@ -1,22 +1,26 @@
 { multiplexer, pkgs, ...}:
 let
-  multiplexerConfig = {
-    kitty = {
-      packages = [];
-      file = {
-        ".config/kitty/kitty.conf".source = ../../kitty/no-tmux.conf;
-        ".config/kitty/navigator.py".source = ../../kitty/navigator.py;
-        ".config/kitty/sessionizer/session.py".source = ../../kitty/sessionizer/session.py;
-        ".config/kitty/resizer.py".source = ../../kitty/resizer.py;
-      };
-    };
-    tmux = {
-      packages = [pkgs.tmux];
-      file = {
-        ".config/kitty/kitty.conf".source = ../../kitty/with-tmux.conf;
-      };
-    };
+  kittyConfig = path: {
+    source = path;
+    onChange = "kill -SIGUSR1 $KITTY_PID";
   };
-in {
-  home = multiplexerConfig."${multiplexer}";
-}
+in
+  let
+    multiplexerConfig = {
+      kitty = {
+        packages = [];
+        file = {
+          ".config/kitty/dynamic/tmux-emulator.conf" = kittyConfig ../../kitty/tmux-emulator.conf;
+          ".config/kitty/navigator.py" = kittyConfig ../../kitty/navigator.py;
+          ".config/kitty/sessionizer/session.py" = kittyConfig ../../kitty/sessionizer/session.py;
+          ".config/kitty/resizer.py" = kittyConfig ../../kitty/resizer.py;
+        };
+      };
+      tmux = {
+        packages = [pkgs.tmux];
+      };
+    };
+  in {
+    home = multiplexerConfig."${multiplexer}";
+  }
+

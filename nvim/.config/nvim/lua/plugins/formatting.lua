@@ -32,7 +32,7 @@ return {
 				},
 			}
 			if vim.fn.executable("rubocop") == 1 then
-				formatters.ruby = { "rubocop" }
+				formatters.ruby = { cmd = "rubocop" }
 			end
 
 			conform.setup({

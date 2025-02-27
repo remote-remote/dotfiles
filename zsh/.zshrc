@@ -24,3 +24,4 @@ alias gbc='git branch --merged | egrep -v "(^\*|master|main|dev)" | xargs git br
 source ~/.config/zsh/local.zsh
 source ~/.config/zsh/dev.zsh
 
+export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"

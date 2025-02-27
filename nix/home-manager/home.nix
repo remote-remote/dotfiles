@@ -1,29 +1,45 @@
-{ config, pkgs, multiplexer, ... }:
+{ config, pkgs, multiplexer, username, ... }:
 {
   home = {
-    username = "remote.remote";
-    homeDirectory = "/Users/remote.remote";
-    stateVersion = "24.11"; # Please read the comment before changing.
+    username = "${username}";
+    homeDirectory = "/Users/${username}";
+    stateVersion = "24.11";
 
-    # maybe I should not have kitty here, but in the system config?
-    # but this is dependent on it...
     packages = with pkgs; [
-      zsh
       gawk
       fzf
       ripgrep
+      zoxide
+      neovim
+      direnv
+      # Maybe add this later
+      # rbenv
+      # nvm
     ];
 
     file = {
       ".config/kitty/kitty-themes".source = ../../kitty/kitty-themes;
+      ".config/kitty/kitty.conf" = {
+        source = ../../kitty/kitty.conf;
+        onChange = "kill -SIGUSR1 $KITTY_PID";
+      };
     };
 
     sessionVariables = {
-    # EDITOR = "emacs";
+      EDITOR = "nvim";
+      HOMEBREW_PREFIX = "/opt/homebrew";
+      PATH = "$HOME/bin:$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Applications/SnowSQL.app/Contents/MacOS:$HOME/Library/Application Support/JetBrains/Toolbox/scripts:$PATH";
+      MANPATH = "/opt/homebrew/share/man:$MANPATH";
+      INFOPATH = "/opt/homebrew/share/info:$INFOPATH";
+      NVM_DIR = "$HOME/.nvm";
     };
   };
 
+  programs = {
+    home-manager.enable = true;
 
-  # Let Home Manager install and manage itself.
-  programs.home-manager.enable = true;
+    zoxide = {
+      enable = true;
+    };
+  };
 }

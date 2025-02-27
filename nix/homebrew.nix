@@ -1,9 +1,9 @@
-{ ... }:
+{ user, ... }:
 {
   nix-homebrew = {
     enable = true;
     enableRosetta = true;
-    user = "remote.remote";
+    user = "${user}";
     autoMigrate = true;
   };
 
@@ -14,6 +14,12 @@
       "spotify"
       "brave-browser"
       "kitty"
+      # work crap
+      # "nvm"
+      # "postgresql@15"
+      # "rbenv"
+      "slack"
+      "zoom"
     ];
     taps = [
       "nikitabobko/tap"
