@@ -16,7 +16,6 @@
       "kitty"
       # work crap
       # "nvm"
-      # "postgresql@15"
       # "rbenv"
       "slack"
       "zoom"

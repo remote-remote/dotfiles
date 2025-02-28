@@ -25,27 +25,13 @@
 
   # outputs is a function that takes inputs, plus this `self` thing
   # not sure what `self` is...
-  outputs = inputs@{ self, darwin, nixpkgs, home-manager, ... }:
+  outputs = inputs @ { self, darwin, nixpkgs, home-manager, ... }:
   # let is naming some stuff for use in the `in` block
   let
-    inherit home-manager;
-    # Dynamic username, empty string fallback (then "jasonamador")
-    username = let u = builtins.getEnv "USER"; 
-    in if u == "" then "user" else u;
+    inherit (self) outputs;
 
-    # Dynamic hostname with fallbacks
-    hostname = let
-      envHost = builtins.getEnv "HOST";
-    in
-      if envHost != "" then envHost
-      else "Jasons-MacBook-Pro-2";
-
-    system = "aarch64-darwin";
-
-    pkgs = nixpkgs.legacyPackages.${system};
-
-    mkHomeConfig = username: home-manager.lib.homeManagerConfiguration {
-      inherit pkgs;
+    mkHomeConfig = username: system: home-manager.lib.homeManagerConfiguration {
+      pkgs = import nixpkgs {inherit system;};
       extraSpecialArgs = {
         # I can make this dynamic somehow, but for now... the kitty thing works pretty good.
         multiplexer = "kitty";
@@ -58,41 +44,21 @@
         ./home-manager/postgres.nix
       ];
     };
-    
-    configuration = { pkgs, ... }: {
-      # Necessary for using flakes on this system.
-      nix.settings.experimental-features = "nix-command flakes";
 
-      # Set Git commit hash for darwin-version.
-      system.configurationRevision = self.rev or self.dirtyRev or null;
-
-      # Used for backwards compatibility, please read the changelog before changing.
-      # $ darwin-rebuild changelog
-      system.stateVersion = 6;
-      # Preserve Homebrew
-      environment.pathsToLink = [ "/opt/homebrew/bin" ];  # Keep Homebrew in PATH
-      environment.etc."homebrew/Brewfile".enable = false;  # Don’t manage Brewfile
-
-      # The platform the configuration will be used on.
-      nixpkgs.hostPlatform = "aarch64-darwin";
-
-      security.pam.enableSudoTouchIdAuth = true;
-    };
-  in {
-
-    # Build darwin flake using:
-    # $ darwin-rebuild build --flake .#midnight-remote
-    darwinConfigurations."${hostname}" = darwin.lib.darwinSystem {
+    mkDarwinConfig = username: darwin.lib.darwinSystem {
+      system = "aarch64-darwin";
       specialArgs = {
-        inherit username;
+        inherit inputs outputs username;
       };
       modules = [
-        configuration
         ./system.nix
         # ./homebrew.nix
         # nix-homebrew.darwinModules.nix-homebrew
       ];
     };
-    homeConfigurations."${username}" = mkHomeConfig "${username}";
+  in {
+    darwinConfigurations."work-remote" = mkDarwinConfig "remote.worker";
+    darwinConfigurations."midnight-remote" = mkDarwinConfig "remote.remote";
+    homeConfigurations."remote.remote" = mkHomeConfig "remote.remote" "aarch64-darwin";
   };
 }
