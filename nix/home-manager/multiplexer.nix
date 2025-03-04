@@ -1,4 +1,4 @@
-{ multiplexer, pkgs, ...}:
+{ remote, pkgs, ...}:
 let
   kittyConfig = path: {
     source = path;
@@ -21,6 +21,6 @@ in
       };
     };
   in {
-    home = multiplexerConfig."${multiplexer}";
+    home = multiplexerConfig."${remote.multiplexer}";
   }
 

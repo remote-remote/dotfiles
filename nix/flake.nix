@@ -20,22 +20,21 @@
     };
 
     # Homebrew
-    # nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
   };
 
   # outputs is a function that takes inputs, plus this `self` thing
   # not sure what `self` is...
-  outputs = inputs @ { self, darwin, nixpkgs, home-manager, ... }:
+  outputs = inputs @ { self, darwin, nixpkgs, home-manager, nix-homebrew, ... }:
   # let is naming some stuff for use in the `in` block
   let
     inherit (self) outputs;
 
-    mkHomeConfig = username: system: home-manager.lib.homeManagerConfiguration {
-      pkgs = import nixpkgs {inherit system;};
+    mkHomeConfig = remote: home-manager.lib.homeManagerConfiguration {
+      pkgs = import nixpkgs { system = remote.system;};
       extraSpecialArgs = {
         # I can make this dynamic somehow, but for now... the kitty thing works pretty good.
-        multiplexer = "kitty";
-        username = username;
+        inherit remote;
       };
       modules = [
         ./home-manager/home.nix
@@ -45,20 +44,23 @@
       ];
     };
 
-    mkDarwinConfig = username: darwin.lib.darwinSystem {
+    mkDarwinConfig = remote: darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       specialArgs = {
-        inherit inputs outputs username;
+        inherit inputs outputs;
+        username = remote.username;
       };
       modules = [
         ./system.nix
-        # ./homebrew.nix
-        # nix-homebrew.darwinModules.nix-homebrew
-      ];
+      ] ++ (if remote.brew.nix then [
+        nix-homebrew.darwinModules.nix-homebrew
+        ./homebrew.nix
+      ] else []);
     };
+
+    remote = import ./config.nix;
   in {
-    darwinConfigurations."work-remote" = mkDarwinConfig "remote.worker";
-    darwinConfigurations."midnight-remote" = mkDarwinConfig "remote.remote";
-    homeConfigurations."remote.remote" = mkHomeConfig "remote.remote" "aarch64-darwin";
+    darwinConfigurations.${remote.hostname} = mkDarwinConfig remote;
+    homeConfigurations.${remote.username} = mkHomeConfig remote;
   };
 }

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, remote, ... }:
 {
   home = {
     packages = with pkgs; [
@@ -41,9 +41,12 @@
       eval "$(direnv hook zsh)"  # Enable direnv in Zsh
     '';
     profileExtra = ''
-      [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"
-      [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
-      eval "$(rbenv init - --no-rehash zsh)"
+      ${if remote.brew.nvm then 
+        ''
+          [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"
+          [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
+        '' else ""}
+      ${if remote.brew.rbenv then ''eval "$(rbenv init - --no-rehash zsh)"'' else ""}
     '';
   };
 

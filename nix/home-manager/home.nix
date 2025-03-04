@@ -1,8 +1,8 @@
-{ config, pkgs, multiplexer, username, ... }:
+{ config, pkgs, remote, ... }:
 {
   home = {
-    username = "${username}";
-    homeDirectory = "/Users/${username}";
+    username = "${remote.username}";
+    homeDirectory = "/Users/${remote.username}";
     stateVersion = "24.11";
 
     packages = with pkgs; [

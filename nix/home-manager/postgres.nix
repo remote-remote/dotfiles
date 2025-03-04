@@ -1,5 +1,5 @@
-{ pkgs, username, ... }:
-{
+{ pkgs, remote, ... }:
+if remote.postgres then {
   home = {
     packages = with pkgs; [
       postgresql_15
@@ -21,11 +21,11 @@
                 ${pkgs.postgresql_15}/bin/initdb -D "$PGDATA" --auth=trust
                 ${pkgs.postgresql_15}/bin/pg_ctl -D "$PGDATA" -o "-k $PGHOST" -l "$PGHOST/pg.log" start
                 sleep 1
-                ${pkgs.postgresql_15}/bin/psql -U ${username} -d postgres -c "CREATE ROLE ${username} WITH LOGIN SUPERUSER CREATEDB;"
+                ${pkgs.postgresql_15}/bin/psql -U ${remote.username} -d postgres -c "CREATE ROLE ${remote.username} WITH LOGIN SUPERUSER CREATEDB;"
                 ${pkgs.postgresql_15}/bin/pg_ctl -D "$PGDATA" stop
               fi
               ${pkgs.postgresql_15}/bin/pg_ctl -D "$PGDATA" -o "-k $PGHOST" -l "$PGHOST/pg.log" start
-              echo "PostgreSQL started at $PGHOST:$PGPORT with user ${username}"
+              echo "PostgreSQL started at $PGHOST:$PGPORT with user ${remote.username}"
             else
               echo "PostgreSQL already running at $PGHOST:$PGPORT"
             fi
@@ -40,4 +40,4 @@
       '';
     };
   };
-}
+} else {}

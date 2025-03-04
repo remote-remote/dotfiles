@@ -1,9 +1,9 @@
-{ user, ... }:
+{ username, ... }:
 {
   nix-homebrew = {
     enable = true;
     enableRosetta = true;
-    user = "${user}";
+    user = "${username}";
     autoMigrate = true;
   };
 
@@ -14,11 +14,11 @@
       "spotify"
       "brave-browser"
       "kitty"
+      "slack"
+      "zoom"
       # work crap
       # "nvm"
       # "rbenv"
-      "slack"
-      "zoom"
     ];
     taps = [
       "nikitabobko/tap"
