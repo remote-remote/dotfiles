@@ -1,8 +1,8 @@
-{ config, pkgs, remote, ... }:
+{ config, pkgs, username, remote, ... }:
 {
   home = {
-    username = "${remote.username}";
-    homeDirectory = "/Users/${remote.username}";
+    inherit username;
+    homeDirectory = "/Users/${username}";
     stateVersion = "24.11";
 
     packages = with pkgs; [
@@ -12,7 +12,9 @@
       zoxide
       neovim
       direnv
-      # Maybe add this later
+      devenv
+      awscli2
+      # Maybe add this later?
       # rbenv
       # nvm
     ];
@@ -23,6 +25,7 @@
         source = ../../kitty/kitty.conf;
         onChange = "kill -SIGUSR1 $KITTY_PID";
       };
+      ".config/kitty/background.webp".source = ../../kitty/background.webp;
     };
 
     sessionVariables = {
@@ -40,6 +43,11 @@
 
     zoxide = {
       enable = true;
+    };
+
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
     };
   };
 }

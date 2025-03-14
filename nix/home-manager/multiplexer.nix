@@ -18,6 +18,7 @@ in
       };
       tmux = {
         packages = [pkgs.tmux];
+        # todo: tmux config files
       };
     };
   in {

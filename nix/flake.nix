@@ -30,11 +30,11 @@
   let
     inherit (self) outputs;
 
-    mkHomeConfig = remote: home-manager.lib.homeManagerConfiguration {
-      pkgs = import nixpkgs { system = remote.system;};
+    mkHomeConfig = username: config: home-manager.lib.homeManagerConfiguration {
+      pkgs = import nixpkgs { system = config.system;};
       extraSpecialArgs = {
-        # I can make this dynamic somehow, but for now... the kitty thing works pretty good.
-        inherit remote;
+        inherit username;
+        remote = config;
       };
       modules = [
         ./home-manager/home.nix
@@ -44,23 +44,20 @@
       ];
     };
 
-    mkDarwinConfig = remote: darwin.lib.darwinSystem {
+    mkDarwinConfig = username: config: darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       specialArgs = {
-        inherit inputs outputs;
-        username = remote.username;
+        inherit inputs outputs username;
       };
-      modules = [
-        ./system.nix
-      ] ++ (if remote.brew.nix then [
-        nix-homebrew.darwinModules.nix-homebrew
-        ./homebrew.nix
-      ] else []);
+      modules = config.darwinModules;
     };
 
-    remote = import ./config.nix;
+    work = (import ./work.nix) inputs;
+    personal = (import ./personal.nix) inputs;
   in {
-    darwinConfigurations.${remote.hostname} = mkDarwinConfig remote;
-    homeConfigurations.${remote.username} = mkHomeConfig remote;
+    darwinConfigurations."work-remote" = mkDarwinConfig "work.remote" work;
+    darwinConfigurations."midnight-remote" = mkDarwinConfig "remote.remote" personal;
+    homeConfigurations."work.remote" = mkHomeConfig "work.remote" work;
+    homeConfigurations."remote.remote" = mkHomeConfig "remote.remote" personal;
   };
 }

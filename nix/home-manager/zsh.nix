@@ -2,12 +2,11 @@
 {
   home = {
     packages = with pkgs; [
-      spaceship-prompt
+      starship
     ];
 
     file = {
       ".config/zsh/dev.zsh".source = ../../zsh/dev.zsh;
-      ".oh-my-zsh/custom/themes/spaceship.zsh-theme".source = "${pkgs.spaceship-prompt}/share/zsh/themes/spaceship.zsh-theme";
     };
 
     sessionVariables = {
@@ -21,7 +20,6 @@
     oh-my-zsh = {
       enable = true;
       plugins = [ "git" ];
-      theme = "spaceship";  # Oh My Zsh will find it in custom/themes/
     };
     shellAliases = {
       vim = "nvim";
@@ -38,7 +36,8 @@
         echo "Warning: ~/.config/zsh/local.zsh not found - secrets and local config unavailable" >&2
       fi
       source ~/.config/zsh/dev.zsh
-      eval "$(direnv hook zsh)"  # Enable direnv in Zsh
+      # eval "$(direnv hook zsh)"  # Enable direnv in Zsh
+      # this should be handled by the enableZshIntegration
     '';
     profileExtra = ''
       ${if remote.brew.nvm then 
@@ -51,4 +50,6 @@
   };
 
   programs.zoxide.enableZshIntegration = true;
+  programs.direnv.enableZshIntegration = true; # see note on other shells below
+  programs.starship.enable = true;
 }
