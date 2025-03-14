@@ -1,5 +1,4 @@
 {
-  username = "remote.remote";
   hostname = "midnight-remote";
   system = "aarch64-darwin";
 
@@ -8,6 +7,6 @@
     nvm = false;
     rbenv = false;
   };
-  postgres = true;
+  postgres = false;
   multiplexer = "kitty";
 }

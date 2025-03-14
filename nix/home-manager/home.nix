@@ -1,8 +1,8 @@
-{ config, pkgs, remote, ... }:
+{ config, pkgs, username, remote, ... }:
 {
   home = {
-    username = "${remote.username}";
-    homeDirectory = "/Users/${remote.username}";
+    inherit username;
+    homeDirectory = "/Users/${username}";
     stateVersion = "24.11";
 
     packages = with pkgs; [
@@ -12,6 +12,7 @@
       zoxide
       neovim
       direnv
+      awscli2
       # Maybe add this later
       # rbenv
       # nvm
