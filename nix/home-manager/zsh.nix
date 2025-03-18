@@ -26,6 +26,8 @@
       vimdiff = "nvim -d";
       awk = "gawk";
       gbc = ''git branch --merged | egrep -v "(^\*|master|main|dev)" | xargs git branch -d'';
+      hms = "home-manager switch --flake ~/dotfiles/nix";
+      drb = "darwin-rebuild switch --flake ~/dotfiles/nix";
     };
     initExtra = ''
       autoload -U +X bashcompinit && bashcompinit
@@ -36,20 +38,10 @@
         echo "Warning: ~/.config/zsh/local.zsh not found - secrets and local config unavailable" >&2
       fi
       source ~/.config/zsh/dev.zsh
-      # eval "$(direnv hook zsh)"  # Enable direnv in Zsh
-      # this should be handled by the enableZshIntegration
-    '';
-    profileExtra = ''
-      ${if remote.brew.nvm then 
-        ''
-          [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"
-          [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
-        '' else ""}
-      ${if remote.brew.rbenv then ''eval "$(rbenv init - --no-rehash zsh)"'' else ""}
     '';
   };
 
   programs.zoxide.enableZshIntegration = true;
-  programs.direnv.enableZshIntegration = true; # see note on other shells below
+  programs.direnv.enableZshIntegration = true;
   programs.starship.enable = true;
 }

@@ -161,22 +161,28 @@ return {
 			cmd = { "elixir-ls" },
 		})
 
-		local mason_packages = vim.fn.stdpath("data") .. "/mason/packages"
-		local volar_path = mason_packages .. "/vue-language-server/node_modules/@vue/language-server"
-
-		lspconfig["ts_ls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-			init_options = {
-				plugins = {
-					{
-						name = "@vue/typescript-plugin",
-						location = volar_path,
-						languages = { "vue" },
+		-- TODO: figure out how to move this dumb logic out
+		local ts_ls = vim.fn.system({ "which", "typescript-language-server" })
+		if string.find(ts_ls, "not found") == nil then
+			local ts_config = {
+				capabilities = capabilities,
+				on_attach = on_attach,
+				filetypes = { "javascript", "typescript", "vue" },
+			}
+			local vue_ls_path = vim.fn.system({ "which", "vue-language-server" })
+			local vue_plugin_path = vue_ls_path .. "/../../lib/node_modules/@vue/language-server"
+			if string.find(vue_ls_path, "not found") == nil then
+				ts_config["init_options"] = {
+					plugins = {
+						{
+							name = "@vue/typescript-plugin",
+							location = vue_plugin_path,
+							languages = { "vue" },
+						},
 					},
-				},
-			},
-			filetypes = { "javascript", "typescript", "vue" },
-		})
+				}
+			end
+			lspconfig["ts_ls"].setup(ts_config)
+		end
 	end,
 }

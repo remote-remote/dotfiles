@@ -6,9 +6,6 @@
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
 
-  # Preserve Homebrew
-  environment.pathsToLink = [ "/opt/homebrew/bin" ];  # Keep Homebrew in PATH
-  environment.etc."homebrew/Brewfile".enable = false;  # Don’t manage Brewfile
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   environment.systemPackages = with pkgs;
@@ -20,7 +17,7 @@
   # system.configurationRevision = self.rev or self.dirtyRev or null;
   system.stateVersion = 6;
 
-  security.pam.enableSudoTouchIdAuth = true;
+  security.pam.services.sudo_local.touchIdAuth = true;
 
   system.defaults = {
     loginwindow.LoginwindowText = "${username}";

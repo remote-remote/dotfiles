@@ -1,12 +1,8 @@
 {
-  description = "Example nix-darwin system flake";
+  description = "NixOS/Nix-Darwin/Home-Manager Flake";
 
   # dependencies of the flake?
   inputs = {
-    # this is the same as:
-    # nixpkgs = {
-    #   url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    # }
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     darwin = {
@@ -40,7 +36,6 @@
         ./home-manager/home.nix
         ./home-manager/zsh.nix
         ./home-manager/multiplexer.nix
-        ./home-manager/postgres.nix
       ];
     };
 
@@ -49,7 +44,12 @@
       specialArgs = {
         inherit inputs outputs username;
       };
-      modules = config.darwinModules;
+      modules = [
+        ./system.nix
+        nix-homebrew.darwinModules.nix-homebrew
+        ./homebrew.nix
+        config.homebrew
+      ];
     };
 
     work = (import ./work.nix) inputs;

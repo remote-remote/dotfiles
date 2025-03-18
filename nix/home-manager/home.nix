@@ -9,14 +9,14 @@
       gawk
       fzf
       ripgrep
-      zoxide
       neovim
+      zoxide
       direnv
       devenv
+      stow
       awscli2
-      # Maybe add this later?
-      # rbenv
-      # nvm
+      docker
+      lua
     ];
 
     file = {
@@ -26,15 +26,12 @@
         onChange = "kill -SIGUSR1 $KITTY_PID";
       };
       ".config/kitty/background.webp".source = ../../kitty/background.webp;
+      ".config/nvim".source = ../../nvim;
     };
 
     sessionVariables = {
       EDITOR = "nvim";
-      HOMEBREW_PREFIX = "/opt/homebrew";
-      PATH = "$HOME/bin:$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Applications/SnowSQL.app/Contents/MacOS:$HOME/Library/Application Support/JetBrains/Toolbox/scripts:$PATH";
-      MANPATH = "/opt/homebrew/share/man:$MANPATH";
-      INFOPATH = "/opt/homebrew/share/info:$INFOPATH";
-      NVM_DIR = "$HOME/.nvm";
+      PATH = "$HOME/bin:$HOME/.local/bin:$PATH";
     };
   };
 
