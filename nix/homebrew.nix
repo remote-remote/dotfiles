@@ -16,9 +16,6 @@
       "kitty"
       "slack"
       "zoom"
-      # work crap
-      # "nvm"
-      # "rbenv"
     ];
     taps = [
       "nikitabobko/tap"

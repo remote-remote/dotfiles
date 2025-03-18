@@ -39,8 +39,8 @@
       modules = [
         ./home-manager/home.nix
         ./home-manager/zsh.nix
+        ./home-manager/nvim.nix
         ./home-manager/multiplexer.nix
-        ./home-manager/postgres.nix
       ];
     };
 
@@ -49,7 +49,12 @@
       specialArgs = {
         inherit inputs outputs username;
       };
-      modules = config.darwinModules;
+      modules = [
+        ./system.nix
+        nix-homebrew.darwinModules.nix-homebrew
+        ./homebrew.nix
+        config.homebrew
+      ];
     };
 
     work = (import ./work.nix) inputs;

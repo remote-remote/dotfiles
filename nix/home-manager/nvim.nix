@@ -2,29 +2,14 @@
 {
   home = {
     inherit username;
-    homeDirectory = "/Users/${username}";
-    stateVersion = "24.11";
-
     packages = with pkgs; [
-      gawk
       fzf
       ripgrep
-      zoxide
-      direnv
-      devenv
-      stow
-      awscli2
-      docker
-      lua
+      neovim
     ];
 
     file = {
-      ".config/kitty/kitty-themes".source = ../../kitty/kitty-themes;
-      ".config/kitty/kitty.conf" = {
-        source = ../../kitty/kitty.conf;
-        onChange = "kill -SIGUSR1 $KITTY_PID";
-      };
-      ".config/kitty/background.webp".source = ../../kitty/background.webp;
+      ".config/nvim".source = ../../nvim;
     };
 
     sessionVariables = {
