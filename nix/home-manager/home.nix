@@ -8,7 +8,9 @@
     packages = with pkgs; [
       gawk
       fzf
+      jq
       ripgrep
+      nerd-fonts.inconsolata
       neovim
       zoxide
       direnv
@@ -16,6 +18,8 @@
       stow
       awscli2
       docker
+      docker-credential-helpers
+      colima
       lua
     ];
 
@@ -27,6 +31,7 @@
       };
       ".config/kitty/background.webp".source = ../../kitty/background.webp;
       ".config/nvim".source = ../../nvim;
+      ".docker/config.json".source = ../../docker/config.json;
     };
 
     sessionVariables = {
