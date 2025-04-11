@@ -21,6 +21,7 @@
       docker-credential-helpers
       colima
       lua
+      nodejs
     ];
 
     file = {

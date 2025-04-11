@@ -18,7 +18,6 @@ return {
 
 		-- Toggle previous & next buffers stored within Harpoon list
 		vim.keymap.set("n", "<C-alt-p>", function()
-			print("harpoon prev")
 			harpoon:list():prev()
 		end, { noremap = true })
 

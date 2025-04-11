@@ -20,3 +20,4 @@ vim.keymap.set("n", "<leader>;", function()
 end)
 
 require("functions/qf-dd")
+require("functions/goto_rails_test")
