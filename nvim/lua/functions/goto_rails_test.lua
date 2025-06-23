@@ -25,7 +25,7 @@ function open_test_file()
 	end
 
 	if test_file then
-		vim.cmd(" " .. test_file)
+		vim.cmd("tabnew " .. test_file)
 	else
 		print("Could not locate test file")
 	end

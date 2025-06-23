@@ -22,6 +22,8 @@
       colima
       lua
       nodejs
+      typescript-language-server
+      vue-language-server
     ];
 
     file = {
