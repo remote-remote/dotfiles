@@ -33,7 +33,6 @@
         onChange = "kill -SIGUSR1 $KITTY_PID";
       };
       ".config/kitty/background.webp".source = ../../kitty/background.webp;
-      ".config/nvim".source = ../../nvim;
       ".docker/config.json".source = ../../docker/config.json;
     };
 

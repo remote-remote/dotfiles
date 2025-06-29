@@ -16,6 +16,7 @@
       "kitty"
       "slack"
       "zoom"
+      "bruno"
     ];
     taps = [
       "nikitabobko/tap"
