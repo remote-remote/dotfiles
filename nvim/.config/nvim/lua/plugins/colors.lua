@@ -6,4 +6,11 @@ return {
 	"morhetz/gruvbox",
 	"rose-pine/neovim",
 	"catppuccin/nvim",
+	{
+		"sainnhe/everforest",
+		init = function()
+			print("everforest init")
+			vim.g.everforest_background = "hard"
+		end,
+	},
 }
