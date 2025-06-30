@@ -22,6 +22,7 @@
       colima
       lua
       nodejs
+      lazygit
       typescript-language-server
       vue-language-server
     ];
