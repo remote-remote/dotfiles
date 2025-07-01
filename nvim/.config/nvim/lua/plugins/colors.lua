@@ -13,4 +13,6 @@ return {
 			vim.g.everforest_background = "hard"
 		end,
 	},
+	"sho-87/kanagawa-paper",
+	"datsfilipe/vesper.nvim",
 }

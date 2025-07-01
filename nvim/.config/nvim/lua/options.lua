@@ -20,7 +20,7 @@ vim.o.undofile = true
 vim.o.listchars = "eol:¬,tab:>·,trail:~,extends:>,precedes:<,space:␣"
 
 vim.opt.termguicolors = true
-vim.cmd.colorscheme("everforest")
+vim.cmd.colorscheme("kanagawa-paper")
 
 vim.filetype.add({
 	extension = {
