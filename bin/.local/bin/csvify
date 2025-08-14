@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Parse command line arguments
+columns=()
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --column)
+            columns+=("$2")
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            exit 1
+            ;;
+    esac
+done
+
+# Check if columns were provided
+if [ ${#columns[@]} -eq 0 ]; then
+    echo "Error: No columns specified. Use --column <field_name>" >&2
+    exit 1
+fi
+
+# Build jq filter for CSV output
+filter="["
+for i in "${!columns[@]}"; do
+    if [ $i -gt 0 ]; then
+        filter+=", "
+    fi
+    filter+=".${columns[$i]}"
+done
+filter+="] | @csv"
+
+# Process JSON input and convert to CSV
+jq -r "$filter" | sed 's/^"//' | sed 's/"$//'

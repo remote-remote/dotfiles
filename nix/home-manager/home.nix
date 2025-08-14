@@ -28,6 +28,7 @@
       lazygit
       typescript-language-server
       vue-language-server
+      yazi
     ];
 
     file = {
