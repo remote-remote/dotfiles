@@ -7,28 +7,27 @@
     stateVersion = "24.11";
 
     packages = with pkgs; [
-      gawk
-      fzf
-      jq
-      ripgrep
-      nerd-fonts.inconsolata
-      neovim
-      zoxide
-      yazi
-      direnv
-      devenv
-      stow
       awscli2
-      fswatch
+      colima
+      devenv
+      direnv
       docker
       docker-credential-helpers
-      colima
-      lua
-      nodejs
+      fswatch
+      fzf
+      gawk
+      jq
       lazygit
+      lua
+      neovim
+      nerd-fonts.inconsolata
+      nodejs
+      ripgrep
+      stow
       typescript-language-server
       vue-language-server
       yazi
+      zoxide
     ];
 
     file = {
