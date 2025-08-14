@@ -27,7 +27,9 @@
     inherit (self) outputs;
 
     mkHomeConfig = username: config: home-manager.lib.homeManagerConfiguration {
-      pkgs = import nixpkgs { system = config.system;};
+      pkgs = import nixpkgs { 
+        system = config.system;
+      };
       extraSpecialArgs = {
         inherit username;
         remote = config;

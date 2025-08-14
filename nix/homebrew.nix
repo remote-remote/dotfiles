@@ -17,6 +17,8 @@
       "slack"
       "zoom"
       "bruno"
+      # I needed this for Evision (OpenCV) to work
+      "tesseract"
     ];
     taps = [
       "nikitabobko/tap"

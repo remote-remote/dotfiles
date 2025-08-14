@@ -1,5 +1,6 @@
-{ config, pkgs, username, remote, ... }:
+{ config, pkgs, username, remote, nixpkgs, ... }:
 {
+  nixpkgs.config.allowUnfree = true;
   home = {
     inherit username;
     homeDirectory = "/Users/${username}";
@@ -13,10 +14,12 @@
       nerd-fonts.inconsolata
       neovim
       zoxide
+      yazi
       direnv
       devenv
       stow
       awscli2
+      fswatch
       docker
       docker-credential-helpers
       colima
