@@ -1,6 +1,8 @@
 vim.o.tabstop = 2
 vim.o.shiftwidth = 2
 
+vim.o.completeopt = "menu,preview,noinsert"
+
 vim.o.expandtab = true
 vim.o.softtabstop = 2
 
@@ -23,8 +25,8 @@ vim.opt.termguicolors = true
 vim.cmd.colorscheme("kanagawa-dragon")
 
 vim.filetype.add({
-	extension = {
-		http = "http",
-		jbuilder = "ruby",
-	},
+  extension = {
+    http = "http",
+    jbuilder = "ruby",
+  },
 })

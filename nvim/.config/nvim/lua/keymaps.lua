@@ -12,11 +12,11 @@ vim.keymap.set("n", "<leader>/", ":noh<CR>")
 
 -- toggle hidden characters
 vim.keymap.set("n", "<leader>;", function()
-	if vim.o.list then
-		vim.o.list = false
-	else
-		vim.o.list = true
-	end
+  if vim.o.list then
+    vim.o.list = false
+  else
+    vim.o.list = true
+  end
 end)
 
 require("functions/qf-dd")

@@ -19,13 +19,14 @@
       jq
       lazygit
       lua
+      lua-language-server
       neovim
       nerd-fonts.inconsolata
       nodejs
       ripgrep
       stow
       typescript-language-server
-      vue-language-server
+      # vue-language-server
       yazi
       zoxide
     ];

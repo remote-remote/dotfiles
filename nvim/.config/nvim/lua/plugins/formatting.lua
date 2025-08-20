@@ -49,19 +49,19 @@ return {
 			-- 		})
 		end,
 	},
-	{
-		"zapling/mason-conform.nvim",
-		config = function()
-			local ensure_installed = {
-				"stylua",
-			}
-			if vim.fn.executable("node") then
-				table.insert(ensure_installed, "prettier")
-			end
-			require("mason-conform").setup({
-				ensure_installed = ensure_installed,
-				automatic_installation = true,
-			})
-		end,
-	},
+	-- {
+	-- 	"zapling/mason-conform.nvim",
+	-- 	config = function()
+	-- 		local ensure_installed = {
+	-- 			"stylua",
+	-- 		}
+	-- 		if vim.fn.executable("node") then
+	-- 			table.insert(ensure_installed, "prettier")
+	-- 		end
+	-- 		require("mason-conform").setup({
+	-- 			ensure_installed = ensure_installed,
+	-- 			automatic_installation = true,
+	-- 		})
+	-- 	end,
+	-- },
 }

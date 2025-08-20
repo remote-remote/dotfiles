@@ -3,6 +3,7 @@
 --
 require("keymaps")
 require("lazy-init")
+require("lsp")
 require("options")
 require("which-key")
 require("functions/git_permalink")

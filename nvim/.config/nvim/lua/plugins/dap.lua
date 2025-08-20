@@ -55,7 +55,7 @@ return {
         log_console_level = vim.log.levels.DEBUG,
       })
 
-      vim.keymap.set("n", "<leader>db", function()
+      vim.keymap.set("n", "<leader>b", function()
         require("dap").toggle_breakpoint()
       end)
 
