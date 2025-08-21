@@ -1,4 +1,4 @@
-vim.lsp.enable({ "lua_ls", "ruby_lsp", "ts_ls", "vue_ls" })
+vim.lsp.enable({ "elixir_ls", "lua_ls", "ruby_lsp", "ts_ls", "vue_ls" })
 
 local opts = { noremap = true, silent = true }
 local keymap = vim.keymap
@@ -10,6 +10,7 @@ vim.lsp.config("*", {
       client.server_capabilities.completionProvider.triggerCharacters = chars
       vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
     end
+
     opts.buffer = bufnr
 
     -- set keybinds
@@ -82,6 +83,7 @@ vim.lsp.config("*", {
     if client:supports_method('textDocument/completion') then
       vim.lsp.completion.enable(true, client.id, bufnr)
     end
+    --
     -- Auto-format ("lint") on save.
     -- Usually not needed if server supports "textDocument/willSaveWaitUntil".
     if not client:supports_method('textDocument/willSaveWaitUntil')
