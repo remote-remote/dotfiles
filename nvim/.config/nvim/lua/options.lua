@@ -1,7 +1,8 @@
 vim.o.tabstop = 2
 vim.o.shiftwidth = 2
 
-vim.o.completeopt = "menu,preview,noinsert"
+-- come back to the preview later
+vim.o.completeopt = "menu,noinsert,noselect"
 
 vim.o.expandtab = true
 vim.o.softtabstop = 2

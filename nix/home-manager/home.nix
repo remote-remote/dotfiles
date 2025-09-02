@@ -38,7 +38,6 @@
         onChange = "kill -SIGUSR1 $KITTY_PID";
       };
       ".config/kitty/background.webp".source = ../../kitty/background.webp;
-      ".docker/config.json".source = ../../docker/config.json;
     };
 
     sessionVariables = {
