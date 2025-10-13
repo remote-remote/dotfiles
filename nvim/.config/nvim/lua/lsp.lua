@@ -2,6 +2,7 @@ vim.lsp.enable({ "elixir_ls", "lua_ls", "ruby_lsp", "ts_ls", "vue_ls" })
 
 local opts = { noremap = true, silent = true }
 local keymap = vim.keymap
+
 vim.lsp.config("*", {
   on_attach = function(client, bufnr)
     if client:supports_method('textDocument/completion') then
@@ -27,7 +28,7 @@ vim.lsp.config("*", {
     keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts) -- show lsp implementations
 
     opts.desc = "See available code actions"
-    keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts) -- see available code actions, in visual mode will apply to selection
+    keymap.set({ "n", "v" }, "<leader>ca", function() vim.lsp.buf.code_action() end, opts) -- see available code actions, in visual mode will apply to selection
 
     opts.desc = "Smart rename"
     keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts) -- smart rename
@@ -86,15 +87,16 @@ vim.lsp.config("*", {
     --
     -- Auto-format ("lint") on save.
     -- Usually not needed if server supports "textDocument/willSaveWaitUntil".
-    if not client:supports_method('textDocument/willSaveWaitUntil')
-        and client:supports_method('textDocument/formatting') then
-      vim.api.nvim_create_autocmd('BufWritePre', {
-        group = vim.api.nvim_create_augroup('my.lsp', { clear = false }),
-        buffer = bufnr,
-        callback = function()
-          vim.lsp.buf.format({ bufnr = bufnr, id = client.id, timeout_ms = 1000 })
-        end,
-      })
-    end
+    -- if not client:supports_method('textDocument/willSaveWaitUntil')
+    --     and client:supports_method('textDocument/formatting') then
+    --   print("Formatting on save")
+    --   vim.api.nvim_create_autocmd('BufWritePre', {
+    --     group = vim.api.nvim_create_augroup('my.lsp', { clear = false }),
+    --     buffer = bufnr,
+    --     callback = function()
+    --       vim.lsp.buf.format({ bufnr = bufnr, id = client.id, timeout_ms = 1000 })
+    --     end,
+    --   })
+    -- end
   end
 })

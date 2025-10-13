@@ -27,6 +27,7 @@
       ripgrep
       stow
       typescript-language-server
+      sc-im
       # vue-language-server
       yazi
       zoxide
