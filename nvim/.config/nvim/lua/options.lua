@@ -7,9 +7,10 @@ vim.o.completeopt = "menu,noinsert,noselect"
 vim.o.expandtab = true
 vim.o.softtabstop = 2
 
-vim.o.foldlevel = 12
+-- vim.o.foldlevel = 12
 vim.o.foldmethod = "expr"
 vim.o.foldexpr = "nvim_treesitter#foldexpr()"
+vim.o.foldenable = false
 
 vim.o.scrolloff = 15
 

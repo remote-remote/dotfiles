@@ -10,6 +10,7 @@
       awscli2
       colima
       devenv
+      nmap
       direnv
       docker
       docker-credential-helpers
