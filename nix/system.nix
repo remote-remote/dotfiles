@@ -9,13 +9,17 @@
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   environment.systemPackages = with pkgs;
-    [ 
+    [
       zsh
     ];
 
   # TODO: What does this do? Do I need it?
   # system.configurationRevision = self.rev or self.dirtyRev or null;
   system.stateVersion = 6;
+
+  # Set the primary user for nix-darwin
+  # System activation runs as root, but user-specific options apply to this user
+  system.primaryUser = username;
 
   security.pam.services.sudo_local.touchIdAuth = true;
 
