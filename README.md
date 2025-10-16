@@ -1,4 +1,8 @@
-# TODO
+## Upgrading Nix Packages
 
-- [ ] install spaceship prompt
-- [ ] install a node version?
+```
+cd dotfiles/nix
+nix flake update
+hms
+drb
+```

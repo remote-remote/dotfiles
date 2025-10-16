@@ -1,9 +1,9 @@
 {
   "FixCursorHold.nvim": { "branch": "master", "commit": "1900f89dc17c603eec29960f57c00bd9ae696495" },
-  "auto-session": { "branch": "main", "commit": "d27a29f5754e3a8b8d89a4069814e53ac583e951" },
+  "auto-session": { "branch": "main", "commit": "8cda7244a02f1304664889a78194604587ffc772" },
   "better-vim-tmux-resizer": { "branch": "master", "commit": "a791fe5b4433ac43a4dad921e94b7b5f88751048" },
   "blame.nvim": { "branch": "main", "commit": "b87b8c820e4cec06fbbd2f946b7b35c45906ee0c" },
-  "conform.nvim": { "branch": "master", "commit": "26ebdcfb4f3c9d33d6f81c9534037bd5172b6d65" },
+  "conform.nvim": { "branch": "master", "commit": "f0c5f73ab2464081cff04b0e29795a31ce60f6ee" },
   "dbt.nvim": { "branch": "main", "commit": "57a4c1001638e6350c5a231e54ccab710cb5c82a" },
   "diffview.nvim": { "branch": "main", "commit": "4516612fe98ff56ae0415a259ff6361a89419b0a" },
   "everforest": { "branch": "master", "commit": "28d59e29d972e21f2e802ce916f28dcab30697ae" },
@@ -45,6 +45,6 @@
   "vesper.nvim": { "branch": "main", "commit": "1717b1ad657c94bec3fc2bdebb0c55452d9fe46d" },
   "vim-fugitive": { "branch": "master", "commit": "61b51c09b7c9ce04e821f6cf76ea4f6f903e3cf4" },
   "vim-kitty-navigator": { "branch": "master", "commit": "081c6f8f9eb17cddb4ff4cd1ad44db48aa76fe03" },
-  "vscode-js-debug": { "branch": "main", "commit": "0740ca29d8c48115b6f510d0d4fd38348a2cbf49" },
+  "vscode-js-debug": { "branch": "main", "commit": "0b5e0dade997b3c702a98e1f58989afcb30612d6" },
   "which-key.nvim": { "branch": "main", "commit": "370ec46f710e058c9c1646273e6b225acf47cbed" }
 }
