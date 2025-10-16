@@ -2,6 +2,7 @@ return {
   "nvim-neotest/neotest",
   dependencies = {
     "nvim-neotest/nvim-nio",
+    "zidhuss/neotest-minitest",
     "jfpedroza/neotest-elixir",
     "nvim-neotest/neotest-jest",
     "marilari88/neotest-vitest",
@@ -35,6 +36,7 @@ return {
             return vim.fn.getcwd()
           end,
         }),
+        require("neotest-minitest")({}),
         require("neotest-vitest")({}),
         require("neotest-elixir")({
           -- -- The Mix task to use to run the tests

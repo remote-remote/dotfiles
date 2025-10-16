@@ -69,7 +69,7 @@ def load_main(args, opts):
     projects = []
 
     for dir in opts.dirs:
-        if dir.endswith("/"):
+        if dir.endswith("/") and os.path.isdir(dir):
             for f in os.scandir(dir):
                 if f.is_dir():
                     name = os.path.basename(f.path)
