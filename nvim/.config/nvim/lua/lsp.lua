@@ -81,9 +81,11 @@ vim.lsp.config("*", {
     opts.desc = "Restart LSP"
     keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts) -- mapping to restart lsp if necessary
 
+
     if client:supports_method('textDocument/completion') then
       vim.lsp.completion.enable(true, client.id, bufnr)
     end
+
     --
     -- Auto-format ("lint") on save.
     -- Usually not needed if server supports "textDocument/willSaveWaitUntil".

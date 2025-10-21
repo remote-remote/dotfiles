@@ -28,6 +28,8 @@
       gbc = ''git branch --merged | egrep -v "(^\*|master|main|dev)" | xargs git branch -d'';
       hms = "home-manager switch --flake ~/dotfiles/nix";
       drb = "darwin-rebuild switch --flake ~/dotfiles/nix";
+      yz = "yazi";
+      cd = "z";
     };
     initExtra = ''
       autoload -U +X bashcompinit && bashcompinit
