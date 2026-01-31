@@ -31,6 +31,7 @@
       # vue-language-server
       yazi
       zoxide
+      postgresql
     ];
 
     file = {

@@ -7,10 +7,15 @@ vim.o.completeopt = "menu,noinsert,noselect"
 vim.o.expandtab = true
 vim.o.softtabstop = 2
 
--- vim.o.foldlevel = 12
-vim.o.foldmethod = "expr"
-vim.o.foldexpr = "nvim_treesitter#foldexpr()"
-vim.o.foldenable = false
+vim.o.foldlevel = 99
+vim.o.foldlevelstart = 99
+
+vim.api.nvim_create_autocmd("FileType", {
+  callback = function()
+    vim.opt_local.foldmethod = "expr"
+    vim.opt_local.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+  end,
+})
 
 vim.o.scrolloff = 15
 

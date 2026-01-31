@@ -1,4 +1,11 @@
-vim.lsp.enable({ "elixir_ls", "lua_ls", "ruby_lsp", "ts_ls", "vue_ls" })
+vim.lsp.enable({ "elixir_ls", "eslint", "lua_ls", "ruby_lsp", "ts_ls", "vue_ls" })
+
+local eslint_enabled = true
+vim.api.nvim_create_user_command("ToggleEslint", function()
+  eslint_enabled = not eslint_enabled
+  vim.lsp.enable("eslint", eslint_enabled)
+  vim.notify("ESLint " .. (eslint_enabled and "enabled" or "disabled"))
+end, {})
 
 local opts = { noremap = true, silent = true }
 local keymap = vim.keymap
@@ -16,7 +23,9 @@ vim.lsp.config("*", {
 
     -- set keybinds
     opts.desc = "Show LSP references"
-    keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts) -- show definition, references
+    keymap.set("n", "gR", function()
+      require("telescope.builtin").lsp_references({ file_ignore_patterns = { "test.ts$", "spec.ts$" } }, opts) -- show definition, references
+    end)
 
     opts.desc = "Go to declaration"
     keymap.set("n", "gD", vim.lsp.buf.declaration, opts) -- go to declaration
@@ -28,7 +37,7 @@ vim.lsp.config("*", {
     keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts) -- show lsp implementations
 
     opts.desc = "See available code actions"
-    keymap.set({ "n", "v" }, "<leader>ca", function() vim.lsp.buf.code_action() end, opts) -- see available code actions, in visual mode will apply to selection
+    keymap.set({ "n", "v" }, "<leader>ca", "<cmd>Lspsaga code_action<CR>", opts) -- see available code actions, in visual mode will apply to selection
 
     opts.desc = "Smart rename"
     keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts) -- smart rename

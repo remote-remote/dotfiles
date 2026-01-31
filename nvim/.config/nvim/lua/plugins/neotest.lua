@@ -2,13 +2,13 @@ return {
   "nvim-neotest/neotest",
   dependencies = {
     "nvim-neotest/nvim-nio",
+    "nvim-lua/plenary.nvim",
+    -- "antoinemadec/FixCursorHold.nvim",
+    "nvim-treesitter/nvim-treesitter",
     "zidhuss/neotest-minitest",
     "jfpedroza/neotest-elixir",
     "nvim-neotest/neotest-jest",
     "marilari88/neotest-vitest",
-    "nvim-lua/plenary.nvim",
-    "antoinemadec/FixCursorHold.nvim",
-    "nvim-treesitter/nvim-treesitter",
   },
   config = function()
     local neotest = require("neotest")
@@ -25,15 +25,54 @@ return {
       neotest.summary.toggle()
     end)
 
+    vim.keymap.set("n", "<leader>to", function()
+      neotest.output.open({ enter = true, focus = true })
+    end)
+
+    vim.keymap.set("n", "<leader>td", function()
+      neotest.run.run({ strategy = "dap" })
+    end)
+
     vim.keymap.set("n", "<leader>tr", function() end)
 
     neotest.setup({
       adapters = {
         require("neotest-jest")({
-          jestCommand = "npx jest",
-          env = { CI = true },
-          cwd = function(path)
+          jestCommand = function()
+            local cwd = vim.fn.getcwd()
+            local bin = cwd .. "/node_modules/.bin/jest"
+            if vim.fn.filereadable(bin) == 1 then
+              return bin
+            end
+            return "npx jest"
+          end,
+          env = { CI = "true", NODE_ENV = "test", JEST_BAIL = "false" },
+          cwd = function()
             return vim.fn.getcwd()
+          end,
+          jestConfigFile = function()
+            local cwd = vim.fn.getcwd()
+            if vim.fn.filereadable(cwd .. "/jest.config.ts") == 1 then
+              return cwd .. "/jest.config.ts"
+            end
+            if vim.fn.filereadable(cwd .. "/jest.config.js") == 1 then
+              return cwd .. "/jest.config.js"
+            end
+            return nil
+          end,
+          strategy_config = function(default_config)
+            if not default_config.args then
+              return default_config
+            end
+            table.insert(default_config.args, 1, "--runInBand")
+            table.insert(default_config.args, "--testTimeout")
+            table.insert(default_config.args, "60000")
+            default_config.resolveSourceMapLocations = {
+              "${workspaceFolder}/**",
+              "!**/node_modules/**",
+            }
+            default_config.sourceMaps = true
+            return default_config
           end,
         }),
         require("neotest-minitest")({}),

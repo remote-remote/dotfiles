@@ -30,6 +30,9 @@ return {
         sass = {
           "prettier",
         },
+        typescriptreact = {
+          "prettier",
+        },
       }
       if vim.fn.executable("rubocop") == 1 then
         formatters.ruby = { cmd = "rubocop" }

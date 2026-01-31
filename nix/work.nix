@@ -8,5 +8,5 @@
     ];
   };
 
-  multiplexer = "kitty";
+  multiplexer = "tmux";
 }
