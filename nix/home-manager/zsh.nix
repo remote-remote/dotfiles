@@ -26,8 +26,7 @@
       vimdiff = "nvim -d";
       awk = "gawk";
       gbc = ''git branch --merged | egrep -v "(^\*|master|main|dev)" | xargs git branch -d'';
-      hms = "home-manager switch --flake ~/dotfiles/nix";
-      drb = "darwin-rebuild switch --flake ~/dotfiles/nix";
+      hms = "home-manager switch --impure --flake ~/dotfiles/nix#default";
       yz = "yazi";
       cd = "z";
     };
