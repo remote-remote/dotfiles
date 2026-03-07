@@ -41,8 +41,12 @@
       fi
       source ~/.config/zsh/dev.zsh
 
-      #export PATH=~/.npm-packages/bin:~/.opencode/bin:$PATH
-      #export NODE_PATH=~/.npm-packages/lib/node_modules
+      [[ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ]] && . /opt/homebrew/opt/asdf/libexec/asdf.sh
+
+      export PATH=~/.opencode/bin:$PATH
+
+      export BUN_INSTALL="$HOME/.bun"
+      export PATH="$BUN_INSTALL/bin:$PATH"
     '';
   };
 

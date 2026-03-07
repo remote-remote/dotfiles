@@ -23,12 +23,10 @@
       lua-language-server
       neovim
       nerd-fonts.inconsolata
-      nodejs
       ripgrep
       stow
       typescript-language-server
       sc-im
-      # vue-language-server
       yazi
       zoxide
       postgresql
