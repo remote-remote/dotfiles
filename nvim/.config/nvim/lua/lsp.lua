@@ -1,4 +1,16 @@
-vim.lsp.enable({ "elixir_ls", "eslint", "lua_ls", "ruby_lsp", "ts_ls", "vue_ls" })
+local lsp_binaries = {
+  elixir_ls = "elixir-ls",
+  eslint    = "vscode-eslint-language-server",
+  lua_ls    = "lua-language-server",
+  ruby_lsp  = "ruby-lsp",
+  ts_ls     = "typescript-language-server",
+  vue_ls    = "vue-language-server",
+}
+for server, binary in pairs(lsp_binaries) do
+  if vim.fn.executable(binary) == 1 then
+    vim.lsp.enable(server)
+  end
+end
 
 local eslint_enabled = true
 vim.api.nvim_create_user_command("ToggleEslint", function()
@@ -31,7 +43,9 @@ vim.lsp.config("*", {
     keymap.set("n", "gD", vim.lsp.buf.declaration, opts) -- go to declaration
 
     opts.desc = "Show LSP definitions"
-    keymap.set("n", "gd", vim.lsp.buf.definition, opts) -- show lsp definitions
+    keymap.set("n", "gd", function()
+      require("telescope.builtin").lsp_definitions({ reuse_win = true })
+    end, opts)
 
     opts.desc = "Show LSP implementations"
     keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts) -- show lsp implementations

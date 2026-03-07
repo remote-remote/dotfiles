@@ -46,7 +46,7 @@ return {
             end
             return "npx jest"
           end,
-          env = { CI = "true", NODE_ENV = "test", JEST_BAIL = "false" },
+          env = { TZ = "UTC", CI = "true", NODE_ENV = "test", JEST_BAIL = "false" },
           cwd = function()
             return vim.fn.getcwd()
           end,

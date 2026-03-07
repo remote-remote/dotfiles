@@ -1,5 +1,8 @@
+local eslint_bin = vim.fn.exepath("vscode-eslint-language-server")
+if eslint_bin == "" then return {} end
+
 return {
-  cmd = { "vscode-eslint-language-server", "--stdio" },
+  cmd = { "node", "--max-old-space-size=8192", eslint_bin, "--stdio" },
   filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "vue" },
   root_markers = { ".eslintrc", ".eslintrc.js", ".eslintrc.json", ".eslintrc.yml", "eslint.config.js", "eslint.config.mjs", "package.json" },
   on_init = function(client)

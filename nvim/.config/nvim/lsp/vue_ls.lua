@@ -1,4 +1,5 @@
 return {
+  root_markers = { "vue.config.js", "vue.config.ts", "nuxt.config.js", "nuxt.config.ts", "nuxt.config.mjs" },
   on_init = function(client)
     client.handlers['tsserver/request'] = function(_, result, context)
       local ts_clients = vim.lsp.get_clients({ bufnr = context.bufnr, name = 'ts_ls' })

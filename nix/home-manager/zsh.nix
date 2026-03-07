@@ -29,6 +29,7 @@
       hms = "home-manager switch --impure --flake ~/dotfiles/nix#default";
       yz = "yazi";
       cd = "z";
+      lg = "lazygit";
     };
     initExtra = ''
       autoload -U +X bashcompinit && bashcompinit

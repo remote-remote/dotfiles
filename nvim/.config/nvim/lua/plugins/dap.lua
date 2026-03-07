@@ -27,14 +27,35 @@ return {
         },
       }
 
+      -- Alias "node" to "pwa-node" for VSCode launch.json compatibility
+      dap.adapters["node"] = dap.adapters["pwa-node"]
+
       for _, language in ipairs({ "typescript", "javascript" }) do
         dap.configurations[language] = {
           {
             type = "pwa-node",
-            name = "Launch file",
             request = "launch",
+            name = "Launch file",
             program = "${file}",
             cwd = "${workspaceFolder}",
+          },
+          {
+            type = "pwa-node",
+            request = "attach",
+            name = "Attach to Node (port 9229)",
+            port = 9229,
+            cwd = "${workspaceFolder}",
+            skipFiles = { "<node_internals>/**", "node_modules/**" },
+          },
+          {
+            type = "pwa-node",
+            request = "launch",
+            name = "NestJS Debug",
+            runtimeExecutable = "npm",
+            runtimeArgs = { "run", "start:debug" },
+            cwd = "${workspaceFolder}",
+            console = "integratedTerminal",
+            skipFiles = { "<node_internals>/**", "node_modules/**" },
           },
           {
             type = "pwa-node",

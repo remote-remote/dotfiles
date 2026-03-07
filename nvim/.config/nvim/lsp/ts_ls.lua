@@ -20,9 +20,8 @@ if vim.fn.isdirectory(npm_vue_path) == 1 then
     plugins = { vue_plugin },
   }
 
-  -- Add vue to filetypes
-  local vue_filetypes = table.insert(tsserver_filetypes, 'vue')
-  ts_ls_config.filetypes = vue_filetypes
+  -- Add vue to filetypes (table.insert modifies in-place, returns nil)
+  table.insert(tsserver_filetypes, 'vue')
 end
 
 return ts_ls_config

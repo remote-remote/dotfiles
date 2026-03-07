@@ -11,7 +11,7 @@ return {
         local default_branch = GetDefaultGitBranch()
         print(default_branch)
         vim.cmd.DiffviewOpen(default_branch)
-      end
+      end, { desc = "Open diffview with default branch" }
       )
       vim.keymap.set("n", "<leader>gdf", "<cmd>DiffviewFileHistory %<CR>")
     end,
