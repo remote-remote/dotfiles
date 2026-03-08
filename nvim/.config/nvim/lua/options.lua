@@ -29,7 +29,7 @@ vim.o.undofile = true
 vim.o.listchars = "eol:¬,tab:>·,trail:~,extends:>,precedes:<,space:␣"
 
 vim.opt.termguicolors = true
-vim.cmd.colorscheme("kanagawa-dragon")
+vim.cmd.colorscheme("vague")
 
 vim.filetype.add({
   extension = {

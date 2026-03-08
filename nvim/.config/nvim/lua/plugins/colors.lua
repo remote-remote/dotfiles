@@ -1,15 +1,17 @@
 return {
   "EdenEast/nightfox.nvim",
+  "metalelf0/black-metal-theme-neovim",
   "savq/melange-nvim",
   "AlexvZyl/nordic.nvim",
   "rebelot/kanagawa.nvim",
+  "RRethy/base16-nvim",
   "morhetz/gruvbox",
   "rose-pine/neovim",
+  "vague-theme/vague.nvim",
   "catppuccin/nvim",
   {
     "sainnhe/everforest",
     init = function()
-      print("everforest init")
       vim.g.everforest_background = "hard"
     end,
   },
