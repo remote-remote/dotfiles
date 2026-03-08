@@ -23,6 +23,8 @@
       lua-language-server
       neovim
       nerd-fonts.inconsolata
+      nerd-fonts.zed-mono
+      nerd-fonts.fira-code
       ripgrep
       stow
       typescript-language-server
