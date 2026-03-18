@@ -9,6 +9,10 @@ local ts_ls_config = {
 local npm_vue_path = vim.fn.system('npm root -g'):gsub('\n', '') .. '/@vue/language-server'
 
 
+ts_ls_config.init_options = {
+  maxTsServerMemory = 8192,
+}
+
 if vim.fn.isdirectory(npm_vue_path) == 1 then
   local vue_plugin = {
     name = '@vue/typescript-plugin',
@@ -16,9 +20,7 @@ if vim.fn.isdirectory(npm_vue_path) == 1 then
     languages = { 'vue' },
   }
 
-  ts_ls_config.init_options = {
-    plugins = { vue_plugin },
-  }
+  ts_ls_config.init_options.plugins = { vue_plugin }
 
   -- Add vue to filetypes (table.insert modifies in-place, returns nil)
   table.insert(tsserver_filetypes, 'vue')

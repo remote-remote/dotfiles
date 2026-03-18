@@ -47,6 +47,12 @@ return {
         builtin.buffers()
       end)
 
+      vim.keymap.set("n", "<leader>fg", function()
+        require("telescope.builtin").live_grep({
+          additional_args = { "--files-with-matches" },
+        })
+      end, { desc = "Grep files (filenames only)" })
+
       require("telescope").setup({
         -- or per-picker if you only want it for references:
         pickers = {
