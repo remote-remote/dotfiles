@@ -45,7 +45,8 @@
 
     sessionVariables = {
       EDITOR = "nvim";
-      PATH = "$HOME/bin:$HOME/.local/bin:$PATH";
+      GOPATH = "$HOME/go";
+      PATH = "$HOME/go/bin:$HOME/bin:$HOME/.local/bin:$PATH";
     };
   };
 
@@ -60,5 +61,7 @@
       enable = true;
       nix-direnv.enable = true;
     };
+
+    go.enable = true;
   };
 }

@@ -1,10 +1,12 @@
 local lsp_binaries = {
+  gopls     = "gopls",
   elixir_ls = "elixir-ls",
   eslint    = "vscode-eslint-language-server",
   lua_ls    = "lua-language-server",
   ruby_lsp  = "ruby-lsp",
   ts_ls     = "typescript-language-server",
   vue_ls    = "vue-language-server",
+  expert    = "expert"
 }
 for server, binary in pairs(lsp_binaries) do
   if vim.fn.executable(binary) == 1 then
