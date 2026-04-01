@@ -49,6 +49,12 @@ vim.lsp.config("*", {
       require("telescope.builtin").lsp_definitions({ reuse_win = true })
     end, opts)
 
+    opts.desc = "Peek definition"
+    keymap.set("n", "gpd", "<cmd>Lspsaga peek_definition<CR>", opts)
+
+    opts.desc = "Peek type definition"
+    keymap.set("n", "gpt", "<cmd>Lspsaga peek_type_definition<CR>", opts)
+
     opts.desc = "Show LSP implementations"
     keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts) -- show lsp implementations
 

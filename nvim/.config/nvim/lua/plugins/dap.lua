@@ -49,6 +49,14 @@ return {
           },
           {
             type = "pwa-node",
+            request = "attach",
+            name = "Attach to Node (port 9230)",
+            port = 9230,
+            cwd = "${workspaceFolder}",
+            skipFiles = { "<node_internals>/**", "node_modules/**" },
+          },
+          {
+            type = "pwa-node",
             request = "launch",
             name = "NestJS Debug",
             runtimeExecutable = "npm",
