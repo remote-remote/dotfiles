@@ -5,10 +5,6 @@
       starship
     ];
 
-    file = {
-      ".config/zsh/dev.zsh".source = ../../zsh/dev.zsh;
-    };
-
     sessionVariables = {
       ZSH_CUSTOM = "$HOME/.oh-my-zsh/custom";
     };
@@ -39,7 +35,6 @@
       else
         echo "Warning: ~/.config/zsh/local.zsh not found - secrets and local config unavailable" >&2
       fi
-      source ~/.config/zsh/dev.zsh
 
       [[ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ]] && . /opt/homebrew/opt/asdf/libexec/asdf.sh
 

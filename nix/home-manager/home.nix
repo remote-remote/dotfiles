@@ -29,6 +29,7 @@
       stow
       typescript-language-server
       sc-im
+      redis
       yazi
       zoxide
       postgresql
