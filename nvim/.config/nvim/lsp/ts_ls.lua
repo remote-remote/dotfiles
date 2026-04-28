@@ -11,6 +11,13 @@ local npm_vue_path = vim.fn.system('npm root -g'):gsub('\n', '') .. '/@vue/langu
 
 ts_ls_config.init_options = {
   maxTsServerMemory = 8192,
+  preferences = {
+    includeCompletionsForModuleExports = true,
+    includeCompletionsForImportStatements = true,
+    includeCompletionsWithInsertText = true,
+    includeAutomaticOptionalChainCompletions = true,
+    importModuleSpecifierPreference = "shortest",
+  },
 }
 
 if vim.fn.isdirectory(npm_vue_path) == 1 then

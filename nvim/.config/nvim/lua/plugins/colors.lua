@@ -7,7 +7,20 @@ return {
   "RRethy/base16-nvim",
   "morhetz/gruvbox",
   "rose-pine/neovim",
-  "vague-theme/vague.nvim",
+  {
+    "vague-theme/vague.nvim",
+    opts = {
+      colors = {
+        bg = "#000000",
+      },
+      on_highlights = function(highlights, colors)
+        local blend = require("vague.utilities").blend
+        highlights.DiffAdd = { bg = blend(colors.plus, colors.bg, 0.3) }
+        highlights.DiffChange = { bg = blend(colors.delta, colors.bg, 0.2) }
+        highlights.DiffDelete = { bg = blend(colors.error, colors.bg, 0.3) }
+      end,
+    },
+  },
   "catppuccin/nvim",
   {
     "sainnhe/everforest",

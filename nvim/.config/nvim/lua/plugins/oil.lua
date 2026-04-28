@@ -5,6 +5,9 @@ return {
   dependencies = { "nvim-tree/nvim-web-devicons" },
   config = function()
     require("oil").setup({
+      view_options = {
+        show_hidden = true,
+      },
       keymaps = {
         ["<C-h>"] = { callback = function() vim.cmd("TmuxNavigateLeft") end, desc = "Navigate left" },
         ["<C-l>"] = { callback = function() vim.cmd("TmuxNavigateRight") end, desc = "Navigate right" },
@@ -41,7 +44,7 @@ return {
                 "--line-number",
                 "--column",
                 "--smart-case",
-                "-u",
+                "-uu",
               },
             })
           end,
