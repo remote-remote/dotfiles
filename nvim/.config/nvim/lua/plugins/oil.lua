@@ -8,6 +8,9 @@ return {
       view_options = {
         show_hidden = true,
       },
+      lsp_file_methods = {
+        autosave_changes = true
+      },
       keymaps = {
         ["<C-h>"] = { callback = function() vim.cmd("TmuxNavigateLeft") end, desc = "Navigate left" },
         ["<C-l>"] = { callback = function() vim.cmd("TmuxNavigateRight") end, desc = "Navigate right" },

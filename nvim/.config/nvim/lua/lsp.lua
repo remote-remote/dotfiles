@@ -1,11 +1,12 @@
 local lsp_binaries = {
-  gopls     = "gopls",
-  elixir_ls = "elixir-ls",
-  eslint    = "vscode-eslint-language-server",
-  lua_ls    = "lua-language-server",
-  ruby_lsp  = "ruby-lsp",
-  ts_ls     = "typescript-language-server",
-  vue_ls    = "vue-language-server",
+  gopls       = "gopls",
+  elixir_ls   = "elixir-ls",
+  eslint      = "vscode-eslint-language-server",
+  lua_ls      = "lua-language-server",
+  ruby_lsp    = "ruby-lsp",
+  ts_ls       = "typescript-language-server",
+  vue_ls      = "vue-language-server",
+  haskell_lsp = "haskell-language-server-9.10.3"
   -- expert    = "expert"
 }
 for server, binary in pairs(lsp_binaries) do
