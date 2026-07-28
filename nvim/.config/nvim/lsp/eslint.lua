@@ -4,12 +4,14 @@ if eslint_bin == "" then return {} end
 return {
   cmd = { "node", "--max-old-space-size=8192", eslint_bin, "--stdio" },
   filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "vue" },
-  root_markers = { ".eslintrc", ".eslintrc.js", ".eslintrc.json", ".eslintrc.yml", "eslint.config.js", "eslint.config.mjs", "package.json" },
+  root_markers = { "eslint.config.js", "eslint.config.mjs", "eslint.config.cjs", ".eslintrc", ".eslintrc.js", ".eslintrc.json", ".eslintrc.yml", ".git" },
   on_init = function(client)
-    -- Set working directory to the detected root so ESLint finds configs correctly
-    client.settings = vim.tbl_deep_extend("force", client.settings or {}, {
-      workingDirectory = { directory = client.root_dir },
-    })
+    local root = client.root_dir
+    if root and vim.startswith(root, "/") then
+      client.settings = vim.tbl_deep_extend("force", client.settings or {}, {
+        workingDirectory = { directory = root },
+      })
+    end
   end,
   settings = {
     validate = "on",

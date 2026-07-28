@@ -10,7 +10,6 @@
       awscli2
       colima
       devenv
-      nmap
       direnv
       docker
       docker-credential-helpers
@@ -22,17 +21,19 @@
       lua
       lua-language-server
       neovim
+      nerd-fonts.fira-code
       nerd-fonts.inconsolata
       nerd-fonts.zed-mono
-      nerd-fonts.fira-code
-      ripgrep
-      stow
-      typescript-language-server
-      sc-im
+      nmap
+      postgresql
       redis
+      ripgrep
+      sc-im
+      stow
+      tree-sitter
+      typescript-language-server
       yazi
       zoxide
-      postgresql
     ];
 
     file = {

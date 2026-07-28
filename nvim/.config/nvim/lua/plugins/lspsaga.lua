@@ -29,6 +29,7 @@ return {
       },
     })
     vim.keymap.set("n", "<leader>o", "<cmd>Lspsaga outline<CR>", { desc = "Toggle Lspsaga outline" })
+    vim.keymap.set("n", "<leader>k", "<cmd>Lspsaga peek_type_definition<CR>", { desc = "Lspsaga peek definition" })
   end,
   dependencies = {
     'nvim-treesitter/nvim-treesitter', -- optional

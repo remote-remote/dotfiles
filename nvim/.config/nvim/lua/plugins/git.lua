@@ -35,7 +35,10 @@ return {
     config = function()
       local gitsigns = require("gitsigns")
       vim.keymap.set('n', '<leader>tw', gitsigns.toggle_word_diff)
+      vim.keymap.set('n', ']g', function() gitsigns.nav_hunk('next') end, { desc = "Next git hunk" })
+      vim.keymap.set('n', '[g', function() gitsigns.nav_hunk('prev') end, { desc = "Prev git hunk" })
       gitsigns.setup({
+        base = "HEAD",
         current_line_blame = true,
       })
     end,
