@@ -1,7 +1,6 @@
 {
-  "aerial.nvim": { "branch": "master", "commit": "645d108a5242ec7b378cbe643eb6d04d4223f034" },
   "auto-session": { "branch": "main", "commit": "6cde3874a9283c2db55627acca5f28e4fa402320" },
-  "base16-nvim": { "branch": "master", "commit": "7090884cee9e89242df3663115004af352a9bbc9" },
+  "base16-nvim": { "branch": "master", "commit": "cf82c4be16334c7cdf9883296eacfba50ff93b26" },
   "better-vim-tmux-resizer": { "branch": "master", "commit": "a791fe5b4433ac43a4dad921e94b7b5f88751048" },
   "black-metal-theme-neovim": { "branch": "main", "commit": "d7ce1c4b9196b3b34e70ca4fa9af108bb4207818" },
   "conform.nvim": { "branch": "master", "commit": "619363c30309d29ffa631e67c8183f2a72caa373" },
@@ -52,6 +51,6 @@
   "vague.nvim": { "branch": "main", "commit": "f9060fdaf7b20f68575d6f8214da6f1cf0c72825" },
   "vesper.nvim": { "branch": "main", "commit": "1717b1ad657c94bec3fc2bdebb0c55452d9fe46d" },
   "vim-tmux-navigator": { "branch": "master", "commit": "e41c431a0c7b7388ae7ba341f01a0d217eb3a432" },
-  "vscode-js-debug": { "branch": "main", "commit": "877d8d4bed9521c6c8478e51451dfcacf649c6ee" },
+  "vscode-js-debug": { "branch": "main", "commit": "0b5e0dade997b3c702a98e1f58989afcb30612d6" },
   "which-key.nvim": { "branch": "main", "commit": "3aab2147e74890957785941f0c1ad87d0a44c15a" }
 }

@@ -25,6 +25,9 @@
       nerd-fonts.jetbrains-mono
       nerd-fonts.inconsolata
       nerd-fonts.zed-mono
+      nerd-fonts.monoid
+      nerd-fonts.iosevka
+      nerd-fonts.proggy-clean-tt
       nmap
       postgresql
       redis
