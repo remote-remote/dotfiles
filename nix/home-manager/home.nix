@@ -22,6 +22,7 @@
       lua-language-server
       neovim
       nerd-fonts.fira-code
+      nerd-fonts.jetbrains-mono
       nerd-fonts.inconsolata
       nerd-fonts.zed-mono
       nmap

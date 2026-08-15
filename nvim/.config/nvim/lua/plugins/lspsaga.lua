@@ -9,7 +9,7 @@ return {
         enable = true,
       },
       symbol_in_winbar = {
-        enable = false,
+        enable = true,
         hide_keyword = false,
         respect_root = false,
       },

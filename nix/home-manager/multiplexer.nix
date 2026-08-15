@@ -20,7 +20,6 @@ in
         packages = [pkgs.tmux];
         file = {
           ".local/bin/tmux-sessionizer".source = ../../bin/.local/bin/tmux-sessionizer;
-        # todo: tmux config files
         };
       };
     };
