@@ -16,16 +16,16 @@ return {
       vim.keymap.set('n', '<leader>cto', vim.lsp.buf.outgoing_calls)
     end
   },
-  {
-    'ldelossa/litee-calltree.nvim',
-    dependencies = 'ldelossa/litee.nvim',
-    event = "VeryLazy",
-    opts = {
-      on_open = "panel",
-      map_resize_keys = false,
-    },
-    config = function(_, opts) require('litee.calltree').setup(opts) end
-  },
+  -- {
+  --   'ldelossa/litee-calltree.nvim',
+  --   dependencies = 'ldelossa/litee.nvim',
+  --   event = "VeryLazy",
+  --   opts = {
+  --     on_open = "panel",
+  --     map_resize_keys = false,
+  --   },
+  --   config = function(_, opts) require('litee.calltree').setup(opts) end
+  -- },
   {
     'ldelossa/litee-symboltree.nvim',
     dependencies = 'ldelossa/litee.nvim',

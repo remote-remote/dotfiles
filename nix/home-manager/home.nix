@@ -22,12 +22,12 @@
       lua-language-server
       neovim
       nerd-fonts.fira-code
-      nerd-fonts.jetbrains-mono
       nerd-fonts.inconsolata
-      nerd-fonts.zed-mono
-      nerd-fonts.monoid
       nerd-fonts.iosevka
+      nerd-fonts.jetbrains-mono
+      nerd-fonts.monoid
       nerd-fonts.proggy-clean-tt
+      nerd-fonts.zed-mono
       nmap
       postgresql
       redis

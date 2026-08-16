@@ -1,0 +1,57 @@
+#!/usr/bin/env zsh
+
+# Split the focused herdr pane anchored to a stable per-workspace cwd, the way
+# tmux resolves split-window against the session directory.
+#
+# herdr's new_cwd = "follow" (the default) resolves a split against the *source
+# pane*, so a `cd` in one pane leaks into every pane split off it afterwards.
+# New tabs already anchor to the workspace, so only splits need this. There is
+# no native new_cwd value meaning "the workspace" (an unrecognised word falls
+# back to $HOME), and the workspace's own identity_cwd drifts to follow the pane
+# rather than staying pinned at creation -- so the anchor is tracked here.
+#
+# Anchor resolution, first hit wins:
+#   1. an explicit pin from `herdr-anchor`
+#   2. the git repo root containing the pane (matches tmux-sessionizer, which
+#      makes one session per repo root)
+#   3. no --cwd at all, i.e. herdr's stock follow-the-pane behaviour
+#
+# usage: herdr-split <right|down>
+
+set -euo pipefail
+
+DIRECTION=${1:?usage: herdr-split <right|down>}
+ANCHOR_DIR=${HERDR_ANCHOR_DIR:-$HOME/.local/state/herdr/anchors}
+
+WORKSPACE=${HERDR_ACTIVE_WORKSPACE_ID:-}
+PANE=${HERDR_ACTIVE_PANE_ID:-}
+PANE_CWD=${HERDR_ACTIVE_PANE_CWD:-}
+
+# Fall back to the live snapshot when run by hand rather than from a keybinding.
+if [[ -z $WORKSPACE || -z $PANE ]]; then
+  eval "$(herdr api snapshot | python3 -c '
+import json, sys, shlex
+snap = json.load(sys.stdin)["snapshot"]
+ws = next((w for w in snap["workspaces"] if w.get("focused")), None)
+pane = next((p for p in snap.get("panes", []) if p.get("focused")), None)
+if ws:   print("WORKSPACE=%s" % shlex.quote(ws["workspace_id"]))
+if pane: print("PANE=%s" % shlex.quote(pane["pane_id"]))
+if pane and pane.get("cwd"): print("PANE_CWD=%s" % shlex.quote(pane["cwd"]))
+')"
+fi
+
+ANCHOR=""
+PIN=$ANCHOR_DIR/${WORKSPACE:-none}
+if [[ -n $WORKSPACE && -f $PIN ]]; then
+  ANCHOR=$(<"$PIN")
+fi
+
+if [[ -z $ANCHOR && -n $PANE_CWD ]]; then
+  ANCHOR=$(git -C "$PANE_CWD" rev-parse --show-toplevel 2>/dev/null) || ANCHOR=""
+fi
+
+set --
+if [[ -n $PANE ]]; then set -- "$PANE"; else set -- --current; fi
+[[ -n $ANCHOR && -d $ANCHOR ]] && set -- "$@" --cwd "$ANCHOR"
+
+exec herdr pane split "$@" --direction "$DIRECTION"

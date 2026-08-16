@@ -1,0 +1,36 @@
+#!/usr/bin/env zsh
+
+# Pin the cwd that `herdr-split` opens new panes in for the current workspace.
+# With no argument, pins the calling pane's current directory.
+#
+# usage: herdr-anchor [path]      pin (default: $PWD)
+#        herdr-anchor --show      print the active pin
+#        herdr-anchor --clear     drop the pin, falling back to git root
+
+set -euo pipefail
+
+ANCHOR_DIR=${HERDR_ANCHOR_DIR:-$HOME/.local/state/herdr/anchors}
+
+WORKSPACE=${HERDR_ACTIVE_WORKSPACE_ID:-${HERDR_WORKSPACE_ID:-}}
+if [[ -z $WORKSPACE ]]; then
+  WORKSPACE=$(herdr api snapshot | python3 -c '
+import json, sys
+ws = next((w for w in json.load(sys.stdin)["snapshot"]["workspaces"] if w.get("focused")), None)
+print(ws["workspace_id"] if ws else "")
+')
+fi
+[[ -n $WORKSPACE ]] || { print -u2 "herdr-anchor: no focused workspace"; exit 1; }
+
+PIN=$ANCHOR_DIR/$WORKSPACE
+case ${1:-} in
+  --show)  [[ -f $PIN ]] && cat "$PIN" || print "no pin for $WORKSPACE"; exit 0 ;;
+  --clear) rm -f "$PIN"; print "cleared pin for $WORKSPACE"; exit 0 ;;
+esac
+
+TARGET=${1:-$PWD}
+TARGET=${TARGET:A}
+[[ -d $TARGET ]] || { print -u2 "herdr-anchor: not a directory: $TARGET"; exit 1; }
+
+mkdir -p "$ANCHOR_DIR"
+print -r -- "$TARGET" > "$PIN"
+print "pinned $WORKSPACE -> $TARGET"

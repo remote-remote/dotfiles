@@ -9,6 +9,7 @@ return {
     "jfpedroza/neotest-elixir",
     "nvim-neotest/neotest-jest",
     "marilari88/neotest-vitest",
+    "nvim-neotest/neotest-go"
   },
   config = function()
     local neotest = require("neotest")
@@ -122,6 +123,8 @@ return {
           --       or vim.startswith(rel_path, 'lib/')
           -- end,
         }),
+        require('neotest-go')({
+        })
       },
     })
   end,
