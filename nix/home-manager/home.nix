@@ -26,6 +26,7 @@
       nerd-fonts.iosevka
       nerd-fonts.jetbrains-mono
       nerd-fonts.monoid
+      nerd-fonts.monaspace
       nerd-fonts.proggy-clean-tt
       nerd-fonts.zed-mono
       nmap

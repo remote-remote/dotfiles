@@ -1,9 +1,9 @@
 # Show first-run notification setup on startup.
 # Missing also shows onboarding; set false after you've chosen.
-onboarding = true
+onboarding = false
 
 [theme]
-name = "terminal"
+name = "kanagawa"
 auto_switch = false
 # Override individual color tokens on top of the base theme.
 # Accepts: hex (#rrggbb), named colors, rgb(r,g,b), or panel_bg = "reset"
@@ -56,8 +56,8 @@ goto = "prefix+s"
 # remove_worktree = ""  # optional, unset by default; opens confirmation
 # rename_workspace = "prefix+shift+w"
 # close_workspace = "prefix+shift+d"
-# previous_workspace = "" # optional, unset by default
-# next_workspace = ""     # optional, unset by default
+previous_workspace = "ctrl+alt+k" # optional, unset by default
+next_workspace = "ctrl+alt+j"     # optional, unset by default
 # previous_agent = ""     # optional, unset by default
 # next_agent = ""         # optional, unset by default
 # focus_agent = ""        # optional indexed binding, e.g. "prefix+alt+1..9"
@@ -71,10 +71,6 @@ next_tab = "prefix+l"
 # close_tab = "prefix+shift+x"
 # rename_pane = "prefix+shift+p"
 # edit_scrollback = "prefix+e"
-focus_pane_left = "ctrl+h"
-focus_pane_down = "ctrl+j"
-focus_pane_up = "ctrl+k"
-focus_pane_right = "ctrl+l"
 # cycle_pane_next = "prefix+tab"
 # cycle_pane_previous = "prefix+shift+tab"
 # last_pane = ""          # optional, unset by default; bind e.g. "prefix+tab" for global back-and-forth
@@ -91,12 +87,12 @@ zoom = "prefix+z"       # legacy alias: fullscreen
 
 # Navigate-mode movement. These local shortcuts win while navigate mode is open.
 # They are independent from focus_pane_*. Do not include prefix+, esc, enter, tab, or 1..9 here.
-# navigate_workspace_up = "up"
-# navigate_workspace_down = "down"
-# navigate_pane_left = "h"      # left arrow always focuses the pane to the left
-# navigate_pane_down = "j"
-# navigate_pane_up = "k"
-# navigate_pane_right = "l"     # right arrow always focuses the pane to the right
+navigate_workspace_up = "k"
+navigate_workspace_down = "j"
+navigate_pane_left = ""      # left arrow always focuses the pane to the left
+navigate_pane_down = ""
+navigate_pane_up = ""
+navigate_pane_right = ""     # right arrow always focuses the pane to the right
 
 # Custom commands use the same binding syntax.
 # type = "shell" runs detached in the background.
@@ -113,6 +109,37 @@ command = "$HOME/.local/bin/herdr-split right"
 key = "prefix+minus"
 type = "shell"
 command = "$HOME/.local/bin/herdr-split down"
+
+# Pane Focus
+# default (no nvim navigator)
+# focus_pane_left = "ctrl+h"
+# focus_pane_down = "ctrl+j"
+# focus_pane_up = "ctrl+k"
+# focus_pane_right = "ctrl+l"
+# Nvim navigator
+[[keys.command]]
+key = "ctrl+h"
+type = "plugin_action"
+command = "vim-herdr-navigation.left"
+description = "navigate left (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+j"
+type = "plugin_action"
+command = "vim-herdr-navigation.down"
+description = "navigate down (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+k"
+type = "plugin_action"
+command = "vim-herdr-navigation.up"
+description = "navigate up (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+l"
+type = "plugin_action"
+command = "vim-herdr-navigation.right"
+description = "navigate right (vim/herdr)"
 
 # Direct pane resize (better-vim-tmux-resizer parity).
 # herdr has no native resize_pane_* key action, only the modal resize_mode,
@@ -141,8 +168,8 @@ command = "herdr pane resize --direction right --current"
 key = "prefix+g"
 type = "popup"
 command = "lazygit"
-width = "90%"
-height = "90%"
+width = "80%"
+height = "80%"
 
 # Legacy indexed shortcut config is still parsed for compatibility.
 # Prefer switch_tab, switch_workspace, and focus_agent for new configs.
@@ -168,7 +195,7 @@ height = "90%"
 sidebar_start_collapsed = true
 
 # Collapsed sidebar presentation: "compact" keeps the narrow status rail, "hidden" uses zero width.
-sidebar_collapsed_mode = "hidden"
+sidebar_collapsed_mode = "compact"
 
 # Terminal width at or below which Herdr uses the mobile single-column layout.
 # Increase this for foldables, tablets, or wide phone terminals.
@@ -212,14 +239,14 @@ prompt_new_tab_name = false
 prompt_new_workspace_name = true
 
 # Draw borders around split panes.
-# pane_borders = true
+pane_borders = true
 
 # Draw interactive scrollbars beside terminal panes.
 # Set false to reclaim the scrollbar column and keep it out of terminal-native selections.
 # pane_scrollbars = true
 
 # Keep split panes visually separated instead of sharing divider borders.
-# pane_gaps = true
+pane_gaps = true
 
 # Show detected/reported agent labels in split pane borders when no manual pane name is set.
 # show_agent_labels_on_pane_borders = false
@@ -314,7 +341,7 @@ hide_tab_bar_when_single_tab = true
 kitty_graphics = true
 
 # Save recent pane screen history across full server restarts.
-pane_history = false
+pane_history = true
 
 # While prefix mode is active, temporarily switch the host input source to
 # an ASCII-capable mode so prefix commands register even when an IME is
