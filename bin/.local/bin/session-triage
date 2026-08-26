@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# session-triage — find abandoned coding-agent sessions and extract their prose.
+#
+#   session-triage list              shortlist abandoned sessions (TSV)
+#   session-triage read <file>       print only human/assistant prose from a transcript
+#   session-triage stats             what stores exist and how big
+#
+# "Abandoned" = the assistant spoke last and nobody replied. Sessions where the
+# *user* spoke last are interrupts/crashes, and are almost always noise.
+#
+# Env: CLAUDE_SESSIONS, PI_SESSIONS to override store locations.
+set -euo pipefail
+
+CLAUDE_DIR="${CLAUDE_SESSIONS:-$HOME/.claude/projects}"
+PI_DIR="${PI_SESSIONS:-$HOME/.pi/agent/sessions}"
+MIN_TURNS="${MIN_TURNS:-3}"
+MIN_AGE="${MIN_AGE:-2}"
+
+command -v jq >/dev/null || { echo "session-triage: jq required" >&2; exit 1; }
+
+# BSD vs GNU stat
+mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null; }
+
+DEBUG_RE='panic|traceback|stack trace|FAIL|error:|exception|bug|failing test'
+
+claude_roles() { jq -r 'select(.type=="user" or .type=="assistant")|.type' "$1" 2>/dev/null; }
+pi_roles()     { jq -r 'select(.type=="message")|.message.role|select(.=="user" or .=="assistant")' "$1" 2>/dev/null; }
+
+# $1=file $2=tool $3=roles-fn
+consider() {
+  local f="$1" tool="$2" rolesfn="$3" roles last turns age dbg
+  roles="$($rolesfn "$f")" || return 0
+  [ -n "$roles" ] || return 0
+  last="$(printf '%s\n' "$roles" | tail -1)"
+  [ "$last" = "assistant" ] || return 0
+  turns="$(printf '%s\n' "$roles" | grep -c '^user$' || true)"
+  [ "$turns" -ge "$MIN_TURNS" ] || return 0
+  age=$(( ( $(date +%s) - $(mtime "$f") ) / 86400 ))
+  [ "$age" -ge "$MIN_AGE" ] || return 0
+  dbg="$(grep -ciE "$DEBUG_RE" "$f" 2>/dev/null || true)"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$tool" "$turns" "$age" "$dbg" "$f"
+}
+
+cmd_list() {
+  if [ -d "$CLAUDE_DIR" ]; then
+    find "$CLAUDE_DIR" -maxdepth 2 -name '*.jsonl' -type f -print0 2>/dev/null |
+      while IFS= read -r -d '' f; do consider "$f" claude claude_roles; done
+  fi
+  if [ -d "$PI_DIR" ]; then
+    find "$PI_DIR" -maxdepth 2 -name '*.jsonl' -type f -print0 2>/dev/null |
+      while IFS= read -r -d '' f; do consider "$f" pi pi_roles; done
+  fi
+}
+
+# Print only the human/assistant prose. Tool calls and tool results are the bulk
+# of a transcript and are dropped here — that is the whole point.
+cmd_read() {
+  local f="${1:?usage: session-triage read <file>}"
+  if jq -e 'select(.type=="message")' "$f" >/dev/null 2>&1; then
+    jq -r 'select(.type=="message") | .message | select(.role=="user" or .role=="assistant")
+      | .role as $r
+      | (if (.content|type)=="string" then .content
+         else ([.content[]? | select(.type=="text") | .text] | join("\n")) end) as $t
+      | select($t|length>0) | "[\($r)] \($t)"' "$f"
+  else
+    jq -r 'select(.type=="user" or .type=="assistant")
+      | .message.role as $r
+      | (if (.message.content|type)=="string" then .message.content
+         else ([.message.content[]? | select(.type=="text") | .text] | join("\n")) end) as $t
+      | select($t|length>0) | "[\($r)] \($t)"' "$f"
+  fi
+}
+
+cmd_stats() {
+  for pair in "claude:$CLAUDE_DIR" "pi:$PI_DIR"; do
+    local name="${pair%%:*}" dir="${pair#*:}"
+    if [ -d "$dir" ]; then
+      printf '%-7s %s files  %s\n' "$name" \
+        "$(find "$dir" -maxdepth 2 -name '*.jsonl' -type f 2>/dev/null | wc -l | tr -d ' ')" "$dir"
+    else
+      printf '%-7s (absent)  %s\n' "$name" "$dir"
+    fi
+  done
+}
+
+case "${1:-list}" in
+  list)  cmd_list ;;
+  read)  shift; cmd_read "$@" ;;
+  stats) cmd_stats ;;
+  *) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+esac
