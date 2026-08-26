@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+# Portable herdr plugin manifest — the lazy-lock.json equivalent for herdr.
+#
+#   herdr-plugins lock    Record currently installed plugins into the repo lockfile.
+#   herdr-plugins sync    Install/enable plugins on this machine to match the lockfile.
+#   herdr-plugins status  Show lockfile vs. installed, without changing anything.
+#
+# herdr's own ~/.config/herdr/plugins.json is a machine-local cache: it bakes in
+# absolute paths (/Users/<you>/...) and a denormalized copy of each plugin's
+# manifest, so it can't be committed as-is. This keeps only the portable part —
+# owner/repo@commit — and replays it through `herdr plugin install --ref`.
+
+set -euo pipefail
+
+DOTFILES="${DOTFILES:-$HOME/dotfiles}"
+LOCKFILE="${HERDR_PLUGINS_LOCK:-$DOTFILES/herdr/.config/herdr/plugins.lock.json}"
+STATE="${XDG_CONFIG_HOME:-$HOME/.config}/herdr/plugins.json"
+
+die() { printf 'herdr-plugins: %s\n' "$*" >&2; exit 1; }
+
+command -v herdr >/dev/null 2>&1 || die "herdr not on PATH"
+command -v jq    >/dev/null 2>&1 || die "jq not on PATH"
+
+# Portable projection of herdr's plugin state. Empty array when nothing is installed.
+read_state() {
+  [ -f "$STATE" ] || { echo '[]'; return; }
+  jq -S '[ .[]
+           | select(.source.kind == "github")
+           | { plugin_id,
+               owner:   .source.owner,
+               repo:    .source.repo,
+               subdir:  (.source.subdir // null),
+               ref:     .source.resolved_commit,
+               enabled: (.enabled // true) } ]
+         | sort_by(.plugin_id)' "$STATE"
+}
+
+read_lock() {
+  [ -f "$LOCKFILE" ] || die "no lockfile at $LOCKFILE (run: herdr-plugins lock)"
+  jq -S 'sort_by(.plugin_id)' "$LOCKFILE"
+}
+
+# owner/repo[/subdir] as `herdr plugin install` wants it
+spec_of() { jq -r 'if .subdir then "\(.owner)/\(.repo)/\(.subdir)" else "\(.owner)/\(.repo)" end'; }
+
+cmd_lock() {
+  local state; state="$(read_state)"
+  [ "$(jq 'length' <<<"$state")" -gt 0 ] || die "no github-sourced plugins installed; nothing to lock"
+  mkdir -p "$(dirname "$LOCKFILE")"
+  printf '%s\n' "$state" > "$LOCKFILE"
+  printf 'wrote %s (%s plugins)\n' "$LOCKFILE" "$(jq 'length' <<<"$state")"
+}
+
+cmd_status() {
+  local lock state
+  lock="$(read_lock)"; state="$(read_state)"
+  jq -r -n --argjson lock "$lock" --argjson state "$state" '
+    ($state | map({key: .plugin_id, value: .}) | from_entries) as $have
+    | $lock[]
+    | .plugin_id as $id
+    | ($have[$id]) as $cur
+    | if   $cur == null      then "missing   \($id)  -> \(.ref[0:12])"
+      elif $cur.ref != .ref  then "outdated  \($id)  \($cur.ref[0:12]) -> \(.ref[0:12])"
+      elif $cur.enabled != .enabled then "toggle    \($id)  enabled=\($cur.enabled) -> \(.enabled)"
+      else                        "ok        \($id)  \(.ref[0:12])"
+      end'
+}
+
+cmd_sync() {
+  local lock state count=0
+  lock="$(read_lock)"; state="$(read_state)"
+
+  local n i entry id ref want_enabled cur_ref cur_enabled spec
+  n="$(jq 'length' <<<"$lock")"
+  for ((i = 0; i < n; i++)); do
+    entry="$(jq -c ".[$i]" <<<"$lock")"
+    id="$(jq -r '.plugin_id'   <<<"$entry")"
+    ref="$(jq -r '.ref'        <<<"$entry")"
+    want_enabled="$(jq -r '.enabled' <<<"$entry")"
+    spec="$(spec_of <<<"$entry")"
+
+    cur_ref="$(jq -r --arg id "$id" '.[] | select(.plugin_id == $id) | .ref' <<<"$state")"
+    cur_enabled="$(jq -r --arg id "$id" '.[] | select(.plugin_id == $id) | .enabled' <<<"$state")"
+
+    if [ "$cur_ref" != "$ref" ]; then
+      printf '==> installing %s (%s@%s)\n' "$id" "$spec" "${ref:0:12}"
+      herdr plugin install "$spec" --ref "$ref" -y
+      count=$((count + 1))
+    fi
+
+    # Re-read: a fresh install defaults to enabled.
+    cur_enabled="$(jq -r --arg id "$id" '.[] | select(.plugin_id == $id) | .enabled // true' <<<"$(read_state)")"
+    if [ -n "$cur_enabled" ] && [ "$cur_enabled" != "$want_enabled" ]; then
+      if [ "$want_enabled" = "true" ]; then herdr plugin enable "$id"; else herdr plugin disable "$id"; fi
+      count=$((count + 1))
+    fi
+  done
+
+  if [ "$count" -eq 0 ]; then
+    echo "already in sync ($n plugins)"
+  else
+    printf 'synced %s change(s); reload herdr to pick them up: herdr server reload-config\n' "$count"
+  fi
+}
+
+case "${1:-}" in
+  lock)   cmd_lock ;;
+  sync)   cmd_sync ;;
+  status) cmd_status ;;
+  *) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+esac

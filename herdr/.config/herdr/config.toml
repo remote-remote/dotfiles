@@ -70,7 +70,7 @@ next_tab = "prefix+l"
 # switch_workspace = ""   # optional indexed binding, e.g. "prefix+shift+1..9"
 # close_tab = "prefix+shift+x"
 # rename_pane = "prefix+shift+p"
-# edit_scrollback = "prefix+e"
+edit_scrollback = ""
 # cycle_pane_next = "prefix+tab"
 # cycle_pane_previous = "prefix+shift+tab"
 # last_pane = ""          # optional, unset by default; bind e.g. "prefix+tab" for global back-and-forth
@@ -112,58 +112,61 @@ command = "$HOME/.local/bin/herdr-split down"
 
 # Pane Focus
 # default (no nvim navigator)
-# focus_pane_left = "ctrl+h"
-# focus_pane_down = "ctrl+j"
-# focus_pane_up = "ctrl+k"
-# focus_pane_right = "ctrl+l"
 # Nvim navigator
 [[keys.command]]
 key = "ctrl+h"
 type = "plugin_action"
-command = "vim-herdr-navigation.left"
-description = "navigate left (vim/herdr)"
+command = "herdr-splits.nav-left"
 
 [[keys.command]]
 key = "ctrl+j"
 type = "plugin_action"
-command = "vim-herdr-navigation.down"
-description = "navigate down (vim/herdr)"
+command = "herdr-splits.nav-down"
 
 [[keys.command]]
 key = "ctrl+k"
 type = "plugin_action"
-command = "vim-herdr-navigation.up"
-description = "navigate up (vim/herdr)"
+command = "herdr-splits.nav-up"
 
 [[keys.command]]
 key = "ctrl+l"
 type = "plugin_action"
-command = "vim-herdr-navigation.right"
-description = "navigate right (vim/herdr)"
+command = "herdr-splits.nav-right"
 
-# Direct pane resize (better-vim-tmux-resizer parity).
-# herdr has no native resize_pane_* key action, only the modal resize_mode,
-# so these shell out to the socket API instead.
 [[keys.command]]
 key = "alt+h"
-type = "shell"
-command = "herdr pane resize --direction left --current"
+type = "plugin_action"
+command = "herdr-splits.resize-left"
 
 [[keys.command]]
 key = "alt+j"
-type = "shell"
-command = "herdr pane resize --direction down --current"
+type = "plugin_action"
+command = "herdr-splits.resize-down"
 
 [[keys.command]]
 key = "alt+k"
-type = "shell"
-command = "herdr pane resize --direction up --current"
+type = "plugin_action"
+command = "herdr-splits.resize-up"
 
 [[keys.command]]
 key = "alt+l"
-type = "shell"
-command = "herdr pane resize --direction right --current"
+type = "plugin_action"
+command = "herdr-splits.resize-right"
 
+# NVIM AGENTS
+[[keys.command]]
+key = "prefix+e"
+type = "plugin_action"
+command = "chmarax.herdr-nvim.toggle"
+description = "nvim sidebar"
+
+[[keys.command]]
+key = "prefix+o"
+type = "plugin_action"
+command = "chmarax.herdr-nvim.pick-file"
+description = "open file from agent output"
+
+# LazyGit
 [[keys.command]]
 key = "prefix+g"
 type = "popup"

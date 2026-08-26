@@ -5,9 +5,9 @@ return {
     init = function()
       vim.g.tmux_navigator_no_mappings = 1
     end,
-    config = function()
-      dofile(vim.fn.expand("~/.config/herdr/plugins/github/vim-herdr-navigation-a8bf42123d81/editor/nvim.lua"))
-    end,
+    cond = function()
+      return vim.env.HERDR_PANE_ID == nil
+    end
   },
   { "RyanMillerC/better-vim-tmux-resizer" },
 }

@@ -16,6 +16,8 @@
 #      makes one session per repo root)
 #   3. no --cwd at all, i.e. herdr's stock follow-the-pane behaviour
 #
+# Focus follows the split into the new pane (see --focus below).
+#
 # usage: herdr-split <right|down>
 
 set -euo pipefail
@@ -54,4 +56,7 @@ set --
 if [[ -n $PANE ]]; then set -- "$PANE"; else set -- --current; fi
 [[ -n $ANCHOR && -d $ANCHOR ]] && set -- "$@" --cwd "$ANCHOR"
 
-exec herdr pane split "$@" --direction "$DIRECTION"
+# --focus moves focus into the new pane, the way tmux split-window does.
+# herdr's default is --no-focus (focus stays in the source pane) and there is
+# no config setting for it, so it has to be passed per split.
+exec herdr pane split "$@" --direction "$DIRECTION" --focus

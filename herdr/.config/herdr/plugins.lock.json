@@ -1,0 +1,18 @@
+[
+  {
+    "enabled": true,
+    "owner": "ChmaraX",
+    "plugin_id": "chmarax.herdr-nvim",
+    "ref": "461f432deba2f4ac9c857d1cc60b27815f4c7e4a",
+    "repo": "herdr-nvim",
+    "subdir": null
+  },
+  {
+    "enabled": true,
+    "owner": "lmilojevicc",
+    "plugin_id": "herdr-splits",
+    "ref": "94f30cf4e9ac76ddf185a3acd0977be728fa4106",
+    "repo": "herdr-splits.nvim",
+    "subdir": null
+  }
+]

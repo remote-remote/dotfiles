@@ -18,9 +18,11 @@ in
       };
       tmux = {
         packages = [pkgs.tmux];
-        file = {
-          ".local/bin/tmux-sessionizer".source = ../../bin/.local/bin/tmux-sessionizer;
-        };
+        # tmux-sessionizer is stow-managed (the `bin` package) rather than
+        # written from the nix store: home-manager and stow both targeting
+        # ~/.local/bin/tmux-sessionizer made `stow bin` abort on a conflict,
+        # which broke re-runs of scripts/install.sh.
+        file = { };
       };
     };
   in {
