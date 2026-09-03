@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+# Systematically test the shared cross-harness agent setup: skill file validity,
+# the stow symlink wiring, and live discovery in each harness (pi + claude).
+#
+#   agent-skills            lint + wiring (fast, free, deterministic)
+#   agent-skills lint       validate every SKILL.md against the Agent Skills spec
+#   agent-skills wiring     check the stow symlinks all resolve to one source
+#   agent-skills probe NAME load skill NAME in each harness and report hit/miss
+#   agent-skills all NAME   lint + wiring, then probe NAME
+#
+# lint/wiring need no network. probe launches pi and claude (costs API calls).
+
+set -uo pipefail
+
+SKILLS_DIR="${AGENT_SKILLS_DIR:-$HOME/.agents/skills}"
+CANON_INSTRUCTIONS="agent-instructions/AGENTS.md"   # basename we expect at the end of both chains
+
+green() { printf '\033[32m%s\033[0m' "$1"; }
+red()   { printf '\033[31m%s\033[0m' "$1"; }
+yellow(){ printf '\033[33m%s\033[0m' "$1"; }
+pass()  { printf '  %s %s\n' "$(green ' ok ')" "$1"; }
+fail()  { printf '  %s %s\n' "$(red 'FAIL')" "$1"; FAILED=1; }
+warn()  { printf '  %s %s\n' "$(yellow 'warn')" "$1"; }
+head_() { printf '\n\033[1m%s\033[0m\n' "$1"; }
+
+FAILED=0
+
+# --- frontmatter helpers -----------------------------------------------------
+# Pull a single-line "key: value" out of the leading --- fenced block.
+frontmatter_value() {
+  awk -v key="$1" '
+    NR==1 && $0!="---" { exit }
+    NR==1 { infm=1; next }
+    infm && $0=="---" { exit }
+    infm {
+      line=$0
+      if (index(line, key ":")==1) {
+        sub("^" key ":[ \t]*", "", line)
+        gsub(/^["'"'"']|["'"'"']$/, "", line)   # strip surrounding quotes
+        print line
+        exit
+      }
+    }
+  ' "$2"
+}
+
+lint_one() {
+  local skill_md="$1" dir name desc rel
+  dir="$(dirname "$skill_md")"
+  rel="${dir#"$SKILLS_DIR"/}"
+  name="$(frontmatter_value name "$skill_md")"
+  desc="$(frontmatter_value description "$skill_md")"
+
+  local ok=1
+  if [ -z "$name" ]; then fail "$rel: missing 'name'"; ok=0; fi
+  if [ -n "$name" ]; then
+    if ! [[ "$name" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+      fail "$rel: name '$name' must be lowercase a-z/0-9/hyphens, no leading/trailing/double hyphens"; ok=0
+    fi
+    if [ "${#name}" -gt 64 ]; then fail "$rel: name is ${#name} chars (max 64)"; ok=0; fi
+    if [ "$name" != "$(basename "$dir")" ]; then
+      warn "$rel: name '$name' != dir '$(basename "$dir")' — pi is fine with this, Claude's spec requires a match"
+    fi
+  fi
+  if [ -z "$desc" ]; then
+    fail "$rel: missing 'description' (skill will not load in either harness)"; ok=0
+  elif [ "${#desc}" -gt 1024 ]; then
+    fail "$rel: description is ${#desc} chars (max 1024)"; ok=0
+  fi
+  [ "$ok" = 1 ] && pass "$rel  ($name)"
+}
+
+cmd_lint() {
+  head_ "lint — SKILL.md validity in $SKILLS_DIR"
+  if [ ! -d "$SKILLS_DIR" ]; then fail "skills dir does not exist: $SKILLS_DIR"; return; fi
+  local found=0 f
+  while IFS= read -r f; do
+    found=1; lint_one "$f"
+  done < <(find -L "$SKILLS_DIR" -name SKILL.md -type f 2>/dev/null | sort)
+  [ "$found" = 0 ] && warn "no SKILL.md files found yet under $SKILLS_DIR"
+}
+
+# --- wiring: every path resolves to the one canonical source -----------------
+resolves_to() { # label  path  expected-basename-tail
+  local label="$1" path="$2" tail="$3" real
+  if [ ! -e "$path" ]; then fail "$label missing: $path"; return; fi
+  real="$(readlink -f "$path")"
+  case "$real" in
+    *"$tail") pass "$label -> $real" ;;
+    *) fail "$label resolves to $real (expected to end in $tail)" ;;
+  esac
+}
+
+cmd_wiring() {
+  head_ "wiring — stow symlinks resolve to a single source"
+  # instructions: both harness paths end at the one AGENTS.md
+  resolves_to "claude CLAUDE.md " "$HOME/.claude/CLAUDE.md"   "$CANON_INSTRUCTIONS"
+  resolves_to "pi     AGENTS.md " "$HOME/.pi/agent/AGENTS.md" "$CANON_INSTRUCTIONS"
+  # skills: both harness dirs must resolve to the *same* canonical directory
+  local pi_sk cl_sk
+  pi_sk="$(readlink -f "$HOME/.agents/skills" 2>/dev/null)"
+  cl_sk="$(readlink -f "$HOME/.claude/skills" 2>/dev/null)"
+  if [ -n "$pi_sk" ] && [ "$pi_sk" = "$cl_sk" ]; then
+    pass "pi & claude skills both -> $pi_sk"
+  else
+    fail "skills dirs diverge: pi='$pi_sk' claude='$cl_sk'"
+  fi
+  # the folding trap: ~/.pi/agent must stay a real dir, not a symlink into the repo
+  if [ -L "$HOME/.pi/agent" ]; then
+    fail "~/.pi/agent is a SYMLINK — stow folded it; pi will write session/auth state into the repo"
+  else
+    pass "~/.pi/agent is a real directory (no fold)"
+  fi
+}
+
+# --- probe: does each harness actually load the skill? -----------------------
+cmd_probe() {
+  local name="$1"
+  [ -z "$name" ] && { echo "usage: agent-skills probe <skill-name>" >&2; return 2; }
+  head_ "probe — live discovery of '$name' in each harness (uses API calls)"
+
+  if command -v pi >/dev/null 2>&1; then
+    local out; out="$(cd "$HOME" && pi -p "/skill:$name" 2>/dev/null)"
+    if printf '%s' "$out" | grep -qi 'not available\|different skill\|scaffold'; then
+      fail "pi     did not find skill '$name'"
+    else
+      pass "pi     loaded '$name'"
+    fi
+  else warn "pi not installed; skipping"; fi
+
+  if command -v claude >/dev/null 2>&1; then
+    local out; out="$(cd "$HOME" && claude -p "/$name" 2>/dev/null)"
+    if printf '%s' "$out" | grep -qi 'unknown command'; then
+      fail "claude did not find skill '$name'"
+    else
+      pass "claude loaded '$name'"
+    fi
+  else warn "claude not installed; skipping"; fi
+}
+
+case "${1:-}" in
+  lint)   cmd_lint ;;
+  wiring) cmd_wiring ;;
+  probe)  cmd_probe "${2:-}" ;;
+  all)    cmd_lint; cmd_wiring; cmd_probe "${2:-}" ;;
+  ""|check) cmd_lint; cmd_wiring ;;
+  -h|--help|help)
+    sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) echo "unknown command: $1 (try: lint | wiring | probe <name> | all <name>)" >&2; exit 2 ;;
+esac
+
+[ "$FAILED" = 0 ] || exit 1
+exit 0

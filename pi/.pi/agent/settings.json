@@ -1,0 +1,6 @@
+{
+  "lastChangelogVersion": "0.84.4",
+  "theme": "dark",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-4-8"
+}

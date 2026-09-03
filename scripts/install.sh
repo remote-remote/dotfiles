@@ -7,7 +7,7 @@
 set -euo pipefail
 
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
-STOW_PACKAGES=(nix aerospace tmux nvim bin herdr claude)
+STOW_PACKAGES=(nix aerospace tmux nvim bin herdr claude pi agents)
 
 log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
@@ -75,12 +75,32 @@ if ! have stow; then
   STOW=(nix-shell --extra-experimental-features 'nix-command flakes' -p stow --run stow)
 fi
 
-mkdir -p "$HOME/.config" "$HOME/.local/bin"
+# Pre-create the real live directories before stowing. stow folds a whole
+# directory into a single symlink when the target doesn't exist, so an unstowed
+# ~/.pi/agent or ~/.claude would become a link *into this repo* and the harness
+# would then write sessions/auth/caches straight through it. Creating the real
+# dirs first forces stow to link individual files and leave the rest alone.
+#
+# ~/.agents is deliberately NOT pre-created past its parent: we *want* stow to
+# fold ~/.agents/skills into one whole-dir symlink at the canonical repo dir, so
+# a newly added skill shows up for pi and claude alike with no re-stow. Nothing
+# writes runtime state there, so folding is safe (unlike ~/.pi/agent).
+mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.claude" \
+  "$HOME/.config/herdr" "$HOME/.config/tmux" "$HOME/.config/aerospace" \
+  "$HOME/.config/nvim" "$HOME/.config/nix" \
+  "$HOME/.pi/agent" "$HOME/.agents"
 
 for pkg in "${STOW_PACKAGES[@]}"; do
   log "Stowing $pkg"
-  "${STOW[@]}" --dir="$DOTFILES" --target="$HOME" --restow "$pkg"
+  stow_cmd="stow --dir=$DOTFILES --target=$HOME --restow $pkg"
+  if have stow; then
+    eval "$stow_cmd"
+  else
+    nix-shell --extra-experimental-features 'nix-command flakes' \
+      -p stow --run "$stow_cmd"
+  fi
 done
+
 
 # 5. Home Manager — installs all packages, kitty config, zsh setup, etc.
 log "Running home-manager switch"
@@ -106,7 +126,7 @@ if command -v nvm >/dev/null 2>&1; then
   log "Installing node + global npm packages"
   nvm install 22
   nvm alias default 22
-  npm install -g corepack @earendil-works/pi-coding-agent
+  npm install -g corepack
 else
   echo "nvm not loaded; skipping node setup" >&2
 fi
@@ -116,7 +136,22 @@ if have go; then
   go install github.com/remote-remote/flow@latest
 fi
 
-# 7. tmux plugin manager + plugins.
+# 7. Claude Code and pi — official installers. Both scripts detect an
+#    existing install and update/reinstall in place (pi's just re-runs npm
+#    under the hood when it finds a prior npm-managed install), and both
+#    fall back to sensible non-interactive defaults when there's no tty, so
+#    they're safe to run unattended here. Needs node (above) for pi.
+if ! have claude; then
+  log "Installing Claude Code"
+  curl -fsSL https://claude.ai/install.sh | bash
+fi
+
+if command -v nvm >/dev/null 2>&1; then
+  log "Installing pi"
+  curl -fsSL https://pi.dev/install.sh | sh
+fi
+
+# 8. tmux plugin manager + plugins.
 TPM_DIR="$HOME/.config/tmux/plugins/tpm"
 if [ ! -d "$TPM_DIR" ]; then
   log "Installing tmux plugin manager"
@@ -124,7 +159,7 @@ if [ ! -d "$TPM_DIR" ]; then
   "$TPM_DIR/bin/install_plugins"
 fi
 
-# 8. herdr plugins — replayed from herdr/.config/herdr/plugins.lock.json.
+# 9. herdr plugins — replayed from herdr/.config/herdr/plugins.lock.json.
 #    herdr's own plugins.json is machine-local (absolute paths), so it isn't
 #    committed; `herdr-plugins lock` regenerates the portable lockfile.
 if have herdr; then
@@ -132,6 +167,15 @@ if have herdr; then
   "$HOME/.local/bin/herdr-plugins" sync || echo "herdr plugin sync failed; run 'herdr-plugins status' to inspect" >&2
 else
   echo "herdr not installed; skipping plugin sync (check the Brewfile step, then: herdr-plugins sync)" >&2
+fi
+
+# 10. herdr agent integrations — writes each agent's hook/extension file and
+#    (for claude) wires it into that agent's own settings. herdr owns and
+#    versions these files (`herdr integration status` reports a version), so
+#    they aren't committed to the repo — just re-run the installer here.
+if have herdr; then
+  have claude && { log "Installing herdr claude integration"; herdr integration install claude; }
+  have pi     && { log "Installing herdr pi integration";     herdr integration install pi; }
 fi
 
 log "Done."

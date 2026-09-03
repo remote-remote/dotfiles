@@ -1,0 +1,5 @@
+- make this idempotent
+- install kitty
+- herdr plugins didn't install correctly
+- agents (claude)
+- ollama and models?

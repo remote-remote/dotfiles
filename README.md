@@ -23,12 +23,16 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `aerospace` → `~/.config/aerospace/`
 - `tmux` → `~/.config/tmux/` (plugins are installed by tpm into a gitignored subdir)
 - `nvim` → `~/.config/nvim/`
-- `bin` → `~/.local/bin/` (scripts: `ghpr`, `csvify`, `tmux-sessionizer`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-project`)
+- `bin` → `~/.local/bin/` (scripts: `ghpr`, `csvify`, `tmux-sessionizer`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-project`, `agent-skills`)
 - `nix` → `~/.config/nix/nix.conf` (enables `nix-command` + `flakes`; stowed first so home-manager can run)
 - `herdr` → `~/.config/herdr/` (`config.toml` + `plugins.lock.json`)
 - `claude` → `~/.claude/` (`CLAUDE.md`, `settings.json`, `commands/`, `agents/`, `skills/`)
+- `pi` → `~/.pi/agent/` (`settings.json` + `AGENTS.md`)
+- `agents` → `~/.agents/skills/` (harness-agnostic skills, the [Agent Skills standard](https://agentskills.io) shared dir)
+- `agent-instructions` is not stowed directly — it holds the one canonical
+  `AGENTS.md` that the `claude` and `pi` packages both symlink to (see [agent setup](#agent-setup-pi--claude)).
 
-To re-stow everything: `cd ~/dotfiles && stow --restow aerospace tmux nvim bin nix herdr claude`.
+To re-stow everything: `cd ~/dotfiles && stow --restow aerospace tmux nvim bin nix herdr claude pi agents`.
 
 ### herdr workspaces
 
@@ -81,11 +85,11 @@ worth carrying between machines, and leaves the rest machine-local:
 
 | path | what it is |
 | --- | --- |
-| `~/.claude/CLAUDE.md` | instructions prepended to every session on this machine |
+| `~/.claude/CLAUDE.md` | symlink → the shared `agent-instructions/AGENTS.md` (see [agent setup](#agent-setup-pi--claude)) |
 | `~/.claude/settings.json` | model, effort level, permissions, hooks, enabled plugins |
 | `~/.claude/commands/` | slash commands (`foo.md` → `/foo`) |
 | `~/.claude/agents/` | subagent definitions (`foo.md` → the `foo` agent type) |
-| `~/.claude/skills/` | personal skills (`foo/SKILL.md`); coexists with the symlinks that `find-skills` drops in from `~/.agents/skills/` |
+| `~/.claude/skills/` | symlink → the shared `agents/.agents/skills/` dir, so pi and claude read the same `foo/SKILL.md` skills |
 
 Two things to know:
 
@@ -99,6 +103,93 @@ Two things to know:
 
 Machine-local secrets belong in `~/.claude/*.env` (not stowed, not committed), referenced
 from `settings.json` permissions by path.
+
+### agent setup (pi + claude)
+
+The coding harnesses (Claude Code, pi) are configured to share one set of
+instructions and one set of skills, so nothing is written twice. herdr is not a
+harness — it's the multiplexer that hosts agent panes — so it has no part in this;
+its per-harness hook/extension glue is machine-local and installed by `herdr
+integration install` (step 10 of `install.sh`), not committed.
+
+**Instructions — one file, two names.** The canonical global instructions live in
+`agent-instructions/AGENTS.md`. The `claude` and `pi` packages don't copy it; they
+symlink to it, so after stowing you get a two-hop chain that resolves to the one
+file:
+
+```
+~/.claude/CLAUDE.md   → claude/.claude/CLAUDE.md   → agent-instructions/AGENTS.md
+~/.pi/agent/AGENTS.md → pi/.pi/agent/AGENTS.md      → agent-instructions/AGENTS.md
+```
+
+pi reads either `AGENTS.md` or `CLAUDE.md`; claude reads only `CLAUDE.md`. Naming
+the canonical file `AGENTS.md` is the vendor-neutral choice. Edit either end and
+`git diff` shows the change in `agent-instructions/AGENTS.md`; neither harness
+*writes* its instructions file, so nothing clobbers the symlinks.
+
+**Skills — one directory.** The canonical skills live in `agents/.agents/skills/`
+(each skill a `<name>/SKILL.md` folder). pi reads `~/.agents/skills/` natively; the
+`claude` package symlinks its whole `skills/` dir at the same canonical dir, so both
+harnesses see the same folders with no per-skill `find-skills` bridge:
+
+```
+~/.agents/skills      → agents/.agents/skills               (pi, native)
+~/.claude/skills      → claude/.claude/skills → agents/.agents/skills   (claude)
+```
+
+**Settings stay separate.** The harness settings schemas differ
+(`~/.claude/settings.json` uses `permissions`/`enabledPlugins`; `~/.pi/agent/settings.json`
+uses `defaultProvider`/`defaultModel`), so they are *not* unified — each is committed
+in its own package. The `pi` package commits only `settings.json` and the `AGENTS.md`
+symlink; `pi/.pi/.gitignore` keeps the live churn (`sessions/`, `cache/`, `auth.json`,
+herdr's `extensions/`, `models-store.json`) out of the repo, the same discipline the
+`claude` package uses.
+
+**Work vs. home.** At work (claude only) stow `claude` + `agents`. At home (pi + claude)
+add `pi`. Instructions and skills are identical everywhere; only which harness
+packages you stow differs.
+
+**Adding a skill.** Drop a `<name>/SKILL.md` folder in `agents/.agents/skills/`. Because
+`~/.agents/skills` and `~/.claude/skills` are both whole-directory symlinks to that
+dir, the skill is live in both harnesses immediately — no re-stow. (pi will even
+scaffold new skills straight into the repo path when asked.) `agents/.agents/skills`
+is the one folder in the repo intentionally left foldable by stow; `install.sh`
+pre-creates every *other* harness dir but only `mkdir -p ~/.agents` so stow folds
+`skills` into a single link.
+
+### testing the agent setup
+
+`agent-skills` (in the `bin` package) tests this wiring systematically — run it after
+authoring a skill or after a re-stow:
+
+```sh
+agent-skills            # lint + wiring: fast, free, deterministic. run this constantly.
+agent-skills lint       # validate every SKILL.md (name rules, description present/length,
+                        #   and whether name matches its dir — which Claude's spec requires)
+agent-skills wiring      # every stow symlink resolves to one source; ~/.pi/agent not folded
+agent-skills probe NAME  # launch pi AND claude, load /skill:NAME, report hit/miss (costs API calls)
+agent-skills all NAME    # lint + wiring, then probe NAME
+```
+
+The layers map to the failure modes: **lint** catches authoring mistakes without a
+harness (it reimplements the Agent Skills frontmatter rules, so a malformed skill
+fails here in milliseconds instead of silently not loading later). **wiring** catches
+a broken or folded symlink after a re-stow — including the folding trap, by asserting
+`~/.pi/agent` is still a real directory. **probe** is the only layer that spends tokens:
+it invokes each harness's slash command (`/skill:NAME` in pi, `/NAME` in claude) and
+checks the harness found the skill rather than answering "not available" / "unknown
+command". `lint` and `wiring` exit non-zero on failure, so `agent-skills` drops into a
+commit hook or CI step cleanly.
+
+**The folding trap — why `install.sh` runs `mkdir -p` first.** stow *folds* a
+directory into a single symlink when the target doesn't exist: an absent
+`~/.pi/agent` becomes one link `~/.pi/agent → pi/.pi/agent` *into this repo*, and pi
+then writes `sessions/`, `auth.json`, and caches straight through it, dumping
+runtime state into your dotfiles. So `install.sh` pre-creates the real live dirs
+(`~/.pi/agent`, `~/.claude`, `~/.agents/skills`) *before* stowing, which forces
+stow to link individual files and leave the rest of each working directory alone.
+This matters most on a fresh machine where the harness hasn't run yet — on a
+machine where it already has, the dir exists and folding never triggers.
 
 ### Nix Managed
 Declared in `nix/flake.nix` + `nix/home-manager/*.nix`. Home-manager writes these paths from the nix store:

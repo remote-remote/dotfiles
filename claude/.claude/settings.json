@@ -1,20 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "model": "opus",
-  "effortLevel": "high",
-  "enabledPlugins": {
-    "typescript-lsp@claude-plugins-official": true,
-    "lua-lsp@claude-plugins-official": true,
-    "gopls-lsp@claude-plugins-official": true
-  },
   "permissions": {
     "allow": [
-      "Read(~/.claude/proton-calendar.env)",
-      "Write(//tmp/**)",
       "Edit(//tmp/**)",
-      "Write(//private/tmp/**)",
       "Edit(//private/tmp/**)",
-      "Write(//var/folders/**)",
       "Edit(//var/folders/**)",
       "Bash(mkdir -p /tmp/*)",
       "Bash(mkdir -p /private/tmp/*)",
@@ -36,6 +25,7 @@
       "Bash(brew info *)"
     ]
   },
+  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -49,5 +39,12 @@
         ]
       }
     ]
-  }
+  },
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true,
+    "lua-lsp@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true
+  },
+  "effortLevel": "high",
+  "theme": "dark"
 }
