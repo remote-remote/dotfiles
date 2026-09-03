@@ -7,7 +7,7 @@
 set -euo pipefail
 
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
-STOW_PACKAGES=(nix aerospace tmux nvim bin herdr)
+STOW_PACKAGES=(nix aerospace tmux nvim bin herdr claude)
 
 log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }

@@ -23,11 +23,38 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `aerospace` → `~/.config/aerospace/`
 - `tmux` → `~/.config/tmux/` (plugins are installed by tpm into a gitignored subdir)
 - `nvim` → `~/.config/nvim/`
-- `bin` → `~/.local/bin/` (scripts: `ghpr`, `csvify`, `tmux-sessionizer`, `herdr-plugins`, `herdr-anchor`, `herdr-split`)
+- `bin` → `~/.local/bin/` (scripts: `ghpr`, `csvify`, `tmux-sessionizer`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-project`)
 - `nix` → `~/.config/nix/nix.conf` (enables `nix-command` + `flakes`; stowed first so home-manager can run)
 - `herdr` → `~/.config/herdr/` (`config.toml` + `plugins.lock.json`)
+- `claude` → `~/.claude/` (`CLAUDE.md`, `settings.json`, `commands/`, `agents/`, `skills/`)
 
-To re-stow everything: `cd ~/dotfiles && stow --restow aerospace tmux nvim bin nix herdr`.
+To re-stow everything: `cd ~/dotfiles && stow --restow aerospace tmux nvim bin nix herdr claude`.
+
+### herdr workspaces
+
+`herdr-project <repo>` builds the standard per-repo workspace: an `edit` tab running
+nvim, a `run` tab split into a scratch shell (top) and the repo's server (bottom), and
+an `agents` tab of three bare shells. Nothing is started in the agents tab — `herdr
+agent start` wants a pane already sitting at a prompt, so the template only makes the
+room.
+
+```sh
+herdr-project ~/code/ts/foo          # build it, or focus it if it's already open
+herdr-project . --agents 2           # fewer agent panes
+herdr-project . --server 'just up'   # override the detected server command
+herdr-project . --server ''          # leave the server pane at a prompt
+```
+
+Re-running is safe: a workspace counts as that repo's when its label matches the repo
+directory name *and* it still holds a pane inside the repo, so `~/code/go/api` and
+`~/code/ts/api` don't steal each other's workspace.
+
+The server command is sniffed from files in the repo (`bin/dev`, a `dev`/`server`
+recipe in a justfile or Makefile, `package.json` scripts, `mix.exs`, `manage.py`, hugo,
+`go.mod`) and never from `command -v` — the pane's shell picks up direnv/nix/nvm and
+the script's shell doesn't, so `mix` can be runnable in the pane while missing from
+the script's PATH. Ambiguous repos (a `cmd/` with two binaries, a `package.json` with
+no dev script) get no guess and a plain prompt.
 
 ### herdr plugins
 
@@ -45,6 +72,33 @@ herdr-plugins lock     # after adding/updating a plugin, then commit the lockfil
 Note: `herdr-splits` and `herdr-nvim` ship **both** a herdr plugin and a Neovim plugin from
 the same repo, so each is pinned twice — once here and once in `lazy-lock.json`. Re-run
 `herdr-plugins lock` after `:Lazy update` (or vice versa) so the two commits don't drift.
+
+### claude config
+
+`~/.claude` is a live working directory — Claude Code keeps session transcripts, caches,
+plugin installs and `history.jsonl` there — so the package stows only the four things
+worth carrying between machines, and leaves the rest machine-local:
+
+| path | what it is |
+| --- | --- |
+| `~/.claude/CLAUDE.md` | instructions prepended to every session on this machine |
+| `~/.claude/settings.json` | model, effort level, permissions, hooks, enabled plugins |
+| `~/.claude/commands/` | slash commands (`foo.md` → `/foo`) |
+| `~/.claude/agents/` | subagent definitions (`foo.md` → the `foo` agent type) |
+| `~/.claude/skills/` | personal skills (`foo/SKILL.md`); coexists with the symlinks that `find-skills` drops in from `~/.agents/skills/` |
+
+Two things to know:
+
+- **Claude Code writes to `settings.json` itself** — `/config`, `/model`, installing a
+  plugin. Those writes land in this repo through the symlink, so they show up in
+  `git diff`. Good (nothing drifts silently), but check `git status` before committing,
+  and re-run `stow --restow claude` if a write ever replaces the symlink with a real file.
+- **`enabledPlugins` is committed, but the plugin *installs* are not** — they live in the
+  gitignored `~/.claude/plugins/`. On a fresh machine, run `/plugin` and install the
+  marketplace plugins listed in `settings.json`.
+
+Machine-local secrets belong in `~/.claude/*.env` (not stowed, not committed), referenced
+from `settings.json` permissions by path.
 
 ### Nix Managed
 Declared in `nix/flake.nix` + `nix/home-manager/*.nix`. Home-manager writes these paths from the nix store:

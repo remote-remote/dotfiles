@@ -1,0 +1,229 @@
+#!/usr/bin/env zsh
+
+# Build the standard per-repo herdr workspace and focus it.
+#
+#   tab "edit"    nvim at the repo root
+#   tab "run"     the repo's server + a scratch shell, split top/bottom
+#   tab "agents"  a few bare shells (default 3)
+#
+# The agents tab only makes the room -- nothing is started in it. `herdr agent
+# start` needs a pane that is already sitting at a prompt, so the panes are the
+# part worth templating; which agent goes where is a per-task decision.
+#
+# Re-running against the same repo focuses the existing workspace instead of
+# building a second one, the way tmux-sessionizer reuses a session. A workspace
+# counts as this repo's when its label matches the repo directory name *and* it
+# still holds a pane inside the repo, so two checkouts sharing a basename
+# (~/code/go/api vs ~/code/ts/api) don't steal each other's workspace.
+#
+# The server command is sniffed from files in the repo, never from `command -v`:
+# the pane's shell picks up direnv/nix/nvm and this script's shell does not, so
+# `mix` or `pnpm` can be perfectly runnable in the pane while missing here.
+# Detection is a guess -- `--server CMD` overrides it and `--server ''` leaves
+# the pane at a prompt.
+#
+# usage: herdr-project [dir] [--agents N] [--server CMD] [--no-focus]
+
+set -euo pipefail
+
+DIR=""
+AGENTS=3
+SERVER=""
+SERVER_SET=0
+FOCUS=1
+
+while (( $# )); do
+  case $1 in
+    --agents)   AGENTS=${2:?--agents needs a count}; shift 2 ;;
+    --server)   SERVER=${2?--server needs a command}; SERVER_SET=1; shift 2 ;;
+    --no-focus) FOCUS=0; shift ;;
+    -h|--help)  awk 'NR == 1 { next }
+                      /^$/ && !seen { next }
+                      /^#/ { seen = 1; sub(/^# ?/, ""); print; next }
+                      { exit }' "$0"
+                exit 0 ;;
+    -*)         print -u2 "herdr-project: unknown option $1"; exit 2 ;;
+    *)          [[ -z $DIR ]] || { print -u2 "herdr-project: unexpected argument $1"; exit 2 }
+                DIR=$1; shift ;;
+  esac
+done
+
+[[ $AGENTS == <-> && $AGENTS -ge 1 ]] || { print -u2 "herdr-project: --agents needs a positive integer"; exit 2 }
+
+DIR=${${DIR:-$PWD}:A}
+[[ -d $DIR ]] || { print -u2 "herdr-project: not a directory: $DIR"; exit 1 }
+ROOT=$(git -C "$DIR" rev-parse --show-toplevel 2>/dev/null) \
+  || { print -u2 "herdr-project: not a git repo: $DIR"; exit 1 }
+LABEL=${ROOT:t}
+
+# python3 rather than jq for the same reason herdr-split uses it: this may run
+# from a herdr keybinding, whose PATH doesn't include the nix profile.
+jget() {
+  python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+for k in sys.argv[1:]:
+    d = d[k]
+print(d)
+' "$@"
+}
+
+existing_workspace() {
+  herdr api snapshot | python3 -c '
+import json, os, sys
+root, label = sys.argv[1], sys.argv[2]
+snap = json.load(sys.stdin)["result"]["snapshot"]
+def inside(pane):
+    cwd = pane.get("cwd") or ""
+    return cwd == root or cwd.startswith(root + os.sep)
+live = {p["workspace_id"] for p in snap.get("panes", []) if inside(p)}
+for w in snap.get("workspaces", []):
+    if w.get("label") == label and w["workspace_id"] in live:
+        print(w["workspace_id"])
+        break
+' "$ROOT" "$LABEL"
+}
+
+# A new pane races its own shell startup: zsh + nix + direnv can take a beat,
+# and `pane run` types into the pty regardless. Wait for the shell to be the
+# only thing in the foreground before sending anything.
+pane_ready() {
+  local pane=$1 deadline=$((SECONDS + 10))
+  while (( SECONDS < deadline )); do
+    if herdr pane process-info --pane "$pane" 2>/dev/null | python3 -c '
+import json, sys
+info = json.load(sys.stdin)["result"]["process_info"]
+shell = info.get("shell_pid")
+busy = [p for p in info.get("foreground_processes", []) if p.get("pid") != shell]
+sys.exit(0 if shell and not busy else 1)
+'; then
+      return 0
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+
+run_in() {
+  local pane=$1 cmd=$2
+  pane_ready "$pane" || print -u2 "herdr-project: $pane never reached a prompt, sending anyway"
+  herdr pane run "$pane" "$cmd" >/dev/null
+}
+
+split_from() {
+  local pane=$1 direction=$2
+  herdr pane split --pane "$pane" --direction "$direction" --cwd "$ROOT" --no-focus | jget result pane pane_id
+}
+
+# First hit wins. Ordered hand-written entry point, then language conventions.
+detect_server() {
+  local root=$1 target justfile
+
+  [[ -x $root/bin/dev ]] && { print 'bin/dev'; return }
+
+  for justfile in $root/justfile $root/Justfile; do
+    [[ -f $justfile ]] || continue
+    for target in dev server start; do
+      grep -qE "^${target}( [^:]*)?:" "$justfile" && { print "just $target"; return }
+    done
+  done
+
+  if [[ -f $root/Makefile ]]; then
+    for target in dev server run; do
+      grep -qE "^${target}:" "$root/Makefile" && { print "make $target"; return }
+    done
+  fi
+
+  if [[ -f $root/package.json ]]; then
+    local script pm="npm run"
+    script=$(python3 -c '
+import json, sys
+try:
+    scripts = json.load(open(sys.argv[1])).get("scripts", {})
+except Exception:
+    scripts = {}
+print(next((n for n in ("dev", "start", "serve") if n in scripts), ""))
+' "$root/package.json")
+    if [[ -n $script ]]; then
+      [[ -f $root/yarn.lock ]] && pm="yarn"
+      [[ -f $root/pnpm-lock.yaml ]] && pm="pnpm"
+      [[ -f $root/bun.lock || -f $root/bun.lockb ]] && pm="bun run"
+      print "$pm $script"
+      return
+    fi
+  fi
+
+  if [[ -f $root/mix.exs ]]; then
+    grep -q ':phoenix' "$root/mix.exs" && { print 'mix phx.server'; return }
+    print 'iex -S mix'
+    return
+  fi
+
+  [[ -f $root/manage.py ]] && { print 'python manage.py runserver'; return }
+
+  if [[ -d $root/content ]]; then
+    for target in hugo.toml hugo.yaml config.toml config.yaml; do
+      [[ -f $root/$target ]] && { print 'hugo server -D'; return }
+    done
+  fi
+
+  if [[ -f $root/go.mod ]]; then
+    [[ -f $root/main.go ]] && { print 'go run .'; return }
+    local mains=($root/cmd/*/main.go(N))
+    (( $#mains == 1 )) && { print "go run ./cmd/${${mains[1]:h}:t}"; return }
+  fi
+
+  print ''
+}
+
+EXISTING=$(existing_workspace)
+if [[ -n $EXISTING ]]; then
+  (( FOCUS )) && herdr workspace focus "$EXISTING" >/dev/null
+  print "herdr-project: $LABEL already open at $EXISTING"
+  exit 0
+fi
+
+(( SERVER_SET )) || SERVER=$(detect_server "$ROOT")
+
+# Everything is built unfocused so the layout doesn't flicker past the user
+# mid-build; focus moves once, at the end.
+CREATED=$(herdr workspace create --cwd "$ROOT" --label "$LABEL" --no-focus)
+WORKSPACE=$(print -r -- "$CREATED" | jget result workspace workspace_id)
+EDIT_TAB=$(print -r -- "$CREATED" | jget result tab tab_id)
+EDIT_PANE=$(print -r -- "$CREATED" | jget result root_pane pane_id)
+
+herdr tab rename "$EDIT_TAB" edit >/dev/null
+run_in "$EDIT_PANE" nvim
+
+RUN=$(herdr tab create --workspace "$WORKSPACE" --cwd "$ROOT" --label run --no-focus)
+RUN_TAB=$(print -r -- "$RUN" | jget result tab tab_id)
+RUN_SHELL=$(print -r -- "$RUN" | jget result root_pane pane_id)
+RUN_SERVER=$(split_from "$RUN_SHELL" down)
+# The root pane stays the scratch shell so the run tab opens with focus already
+# on a prompt; the server takes the pane split off it.
+[[ -n $SERVER ]] && run_in "$RUN_SERVER" "$SERVER"
+
+AGENT_TAB_JSON=$(herdr tab create --workspace "$WORKSPACE" --cwd "$ROOT" --label agents --no-focus)
+AGENT_TAB=$(print -r -- "$AGENT_TAB_JSON" | jget result tab tab_id)
+AGENT_PANE=$(print -r -- "$AGENT_TAB_JSON" | jget result root_pane pane_id)
+# One split right, then stack the rest down that column, so three agents get a
+# half-width pane and two quarter-height ones rather than three thin columns.
+if (( AGENTS >= 2 )); then
+  AGENT_PANE=$(split_from "$AGENT_PANE" right)
+  for (( i = 3; i <= AGENTS; i++ )); do
+    AGENT_PANE=$(split_from "$AGENT_PANE" down)
+  done
+fi
+
+if (( FOCUS )); then
+  herdr workspace focus "$WORKSPACE" >/dev/null
+  herdr tab focus "$EDIT_TAB" >/dev/null
+fi
+
+if [[ -n $SERVER ]]; then
+  print "herdr-project: $LABEL -> $WORKSPACE  server: $SERVER"
+elif (( SERVER_SET )); then
+  print "herdr-project: $LABEL -> $WORKSPACE  server: skipped"
+else
+  print "herdr-project: $LABEL -> $WORKSPACE  server: none detected"
+fi
