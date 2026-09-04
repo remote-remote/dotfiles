@@ -51,15 +51,15 @@ reload_config = "prefix+shift+r"
 workspace_picker = "prefix+w"
 goto = "prefix+s"
 # new_workspace = "prefix+shift+n"
-# new_worktree = "prefix+shift+g"
+new_worktree = "prefix+shift+g"
 # open_worktree = ""    # optional, unset by default
 # remove_worktree = ""  # optional, unset by default; opens confirmation
 # rename_workspace = "prefix+shift+w"
 # close_workspace = "prefix+shift+d"
-previous_workspace = "ctrl+alt+k" # optional, unset by default
-next_workspace = "ctrl+alt+j"     # optional, unset by default
-# previous_agent = ""     # optional, unset by default
-# next_agent = ""         # optional, unset by default
+previous_workspace = "ctrl+alt+k"
+next_workspace = "ctrl+alt+j" 
+previous_agent = "prefix+k"
+next_agent = "prefix+j"
 # focus_agent = ""        # optional indexed binding, e.g. "prefix+alt+1..9"
 # remote_image_paste = "ctrl+v" # only active in herdr --remote; empty disables raw-key image paste
 new_tab = "prefix+c"
@@ -70,7 +70,7 @@ next_tab = "prefix+l"
 # switch_workspace = ""   # optional indexed binding, e.g. "prefix+shift+1..9"
 # close_tab = "prefix+shift+x"
 # rename_pane = "prefix+shift+p"
-edit_scrollback = ""
+edit_scrollback = "prefix+shift+e"
 # cycle_pane_next = "prefix+tab"
 # cycle_pane_previous = "prefix+shift+tab"
 # last_pane = ""          # optional, unset by default; bind e.g. "prefix+tab" for global back-and-forth
@@ -291,6 +291,7 @@ hide_tab_bar_when_single_tab = true
 # accent = "cyan"
 
 # Background notification popup delivery
+show_agent_labels_on_pane_borders = true
 [ui.toast]
 # off = disable pop-up notifications
 # herdr = show in-app toasts
@@ -299,6 +300,7 @@ hide_tab_bar_when_single_tab = true
 # delivery = "off"
 # delay_seconds = 1
 
+delivery = "herdr"
 [ui.toast.herdr]
 # position = "bottom-right"
 

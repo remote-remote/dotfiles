@@ -9,6 +9,7 @@
     packages = with pkgs; [
       awscli2
       colima
+      concurrently
       devenv
       direnv
       docker
