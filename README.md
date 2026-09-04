@@ -157,6 +157,13 @@ is the one folder in the repo intentionally left foldable by stow; `install.sh`
 pre-creates every *other* harness dir but only `mkdir -p ~/.agents` so stow folds
 `skills` into a single link.
 
+`herdr/SKILL.md` is a pointer, not a copy. herdr ships its own agent instructions inside
+the binary (`herdr --skill`), so the committed file keeps only the vendor's frontmatter —
+the description is what makes an agent reach for the skill at all — and its body tells the
+agent to run `herdr --skill` and follow that output. Nothing to regenerate after a `herdr
+update`: the release-matched text always comes from the installed binary at the moment
+it's used.
+
 ### testing the agent setup
 
 `agent-skills` (in the `bin` package) tests this wiring systematically — run it after

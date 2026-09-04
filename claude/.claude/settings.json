@@ -46,5 +46,10 @@
     "gopls-lsp@claude-plugins-official": true
   },
   "effortLevel": "high",
-  "theme": "dark"
+  "theme": "dark",
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "high"
+    }
+  }
 }

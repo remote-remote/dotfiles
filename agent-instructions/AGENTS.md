@@ -52,6 +52,14 @@ Most of the time, I'm pretty informal and I'd like you to match my tone. There a
 when I will spin a little humor just to lighten my own mood, feel free to match that for one
 response, but then we're back to business.
 
+## Division of Labor
+
+I like to code, and I think I have a good sense of proper architecture and code structure.
+When you are implementing for me, pause in logical slices or when a planned task is complete. 
+DO NOT COMMIT unless specifically asked to in the session. I will review the code and might forward
+some commentary or redirection for us to iterate on before we continue. This keeps my judgement
+at the forefront, and keeps me in the loop so I can confidently own what we build together.
+
 ## Code Comments
 
 Keep these concise and relevant. Do not dump context about the task you are working on in
