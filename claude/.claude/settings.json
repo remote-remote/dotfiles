@@ -56,5 +56,10 @@
   "voice": {
     "enabled": true,
     "mode": "hold"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "$HOME/.local/bin/herdr-agent-ctx statusline",
+    "refreshInterval": 15
   }
 }
