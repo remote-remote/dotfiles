@@ -1,6 +1,6 @@
 ---
 name: browser-tools
-description: Interactive browser automation via Chrome DevTools Protocol. Use when you need to interact with web pages, test frontends, or when user interaction with a visible browser is required.
+description: Browser automation via Chrome DevTools Protocol, driving a dedicated Chrome on :9222 (--profile copies the user's cookies and logins into it). Use for all web page interaction, frontend testing, and console/network inspection. Prefer this over the mcp__claude-in-chrome__* tools, which act inside the user's own live browser; reserve those for when acting in that exact live session is the point.
 ---
 
 # Browser Tools
@@ -87,6 +87,20 @@ Navigate to a URL and extract readable content as markdown. Uses Mozilla Readabi
 - When user needs to visually see or interact with a page
 - Debugging authentication or session issues
 - Scraping dynamic content that requires JS execution
+
+### Versus `claude-in-chrome`
+
+Both automate Chrome, so pick deliberately.
+
+This skill is the default. It runs a dedicated browser the agent owns: safe to
+navigate, reload, and throw away, and `--profile` copies over cookies and logins
+when a page needs an authenticated view.
+
+The `mcp__claude-in-chrome__*` tools act inside the browser the user is actually
+looking at, with their live session. That is the only thing they do that this
+skill cannot, and it is rarely what's wanted: it puts the agent in the user's
+real tabs, logged in as them. Reach for them only when operating on that live
+session is the explicit point of the task.
 
 ---
 

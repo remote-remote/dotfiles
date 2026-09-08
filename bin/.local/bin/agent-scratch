@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Print (creating if needed) the scratch directory for the current repo + branch.
+# Shared by every agent skill and harness so that all of them resolve the same
+# path from the same inputs.
+set -euo pipefail
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+	echo "agent-scratch: not inside a git repository" >&2
+	exit 1
+}
+
+# Detached HEAD would otherwise collapse every commit onto one directory.
+branch=$(git -C "$root" rev-parse --abbrev-ref HEAD)
+[ "$branch" = HEAD ] && branch=$(git -C "$root" rev-parse --short HEAD)
+
+slug() {
+	printf '%s' "$1" | tr '[:upper:]' '[:lower:]' |
+		sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//'
+}
+
+# The hash keeps ~/code/go/api and ~/code/ts/api apart on the same branch.
+hash=$(printf '%s@%s' "$root" "$branch" | shasum | cut -c1-6)
+base="${XDG_STATE_HOME:-$HOME/.local/state}/agents/scratch"
+dir="$base/$(slug "$(basename "$root")")/$(slug "$branch")-$hash"
+
+mkdir -p "$dir"
+printf '%s\n' "$dir"
