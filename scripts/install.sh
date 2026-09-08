@@ -136,6 +136,32 @@ if have go; then
   go install github.com/remote-remote/flow@latest
 fi
 
+# 6b. Skill runtime deps. A few skills in agents/.agents/skills ship helper
+#     scripts with their own package.json; each keeps a committed lockfile and
+#     a gitignored node_modules, so every machine installs the same tree. The
+#     loop is generic on purpose — a future skill with a package.json is
+#     picked up with no edit here. browser-tools pulls puppeteer (downloads
+#     Chromium, a few hundred MB); SKIP_SKILL_DEPS=1 skips the whole step.
+if [ "${SKIP_SKILL_DEPS:-0}" != "1" ] && have npm; then
+  for pkg_json in "$DOTFILES"/agents/.agents/skills/*/package.json; do
+    [ -e "$pkg_json" ] || continue
+    skill_dir="$(dirname "$pkg_json")"
+    skill_name="$(basename "$skill_dir")"
+    # Up to date when node_modules is newer than the manifest it was built from.
+    if [ -d "$skill_dir/node_modules" ] &&
+       [ "$skill_dir/node_modules" -nt "$pkg_json" ] &&
+       { [ ! -e "$skill_dir/package-lock.json" ] || [ "$skill_dir/node_modules" -nt "$skill_dir/package-lock.json" ]; }; then
+      continue
+    fi
+    log "Installing deps for skill $skill_name"
+    if [ -e "$skill_dir/package-lock.json" ]; then
+      (cd "$skill_dir" && npm ci --silent) || echo "npm ci failed for skill $skill_name" >&2
+    else
+      (cd "$skill_dir" && npm install --silent) || echo "npm install failed for skill $skill_name" >&2
+    fi
+  done
+fi
+
 # 7. Claude Code and pi — official installers. Both scripts detect an
 #    existing install and update/reinstall in place (pi's just re-runs npm
 #    under the hood when it finds a prior npm-managed install), and both

@@ -157,6 +157,27 @@ is the one folder in the repo intentionally left foldable by stow; `install.sh`
 pre-creates every *other* harness dir but only `mkdir -p ~/.agents` so stow folds
 `skills` into a single link.
 
+**Vendored skills.** Some skills came from elsewhere and were copied in, not linked or
+submoduled: they're short enough to read, and the point is to edit them for my own use.
+Once copied they're mine — no upstream sync, `git log` is the history. Origins, so a
+future diff against upstream is still possible:
+
+| skills | upstream | copied at |
+| --- | --- | --- |
+| `brave-search`, `browser-tools`, `gccli`, `gdcli`, `gmcli`, `transcribe`, `youtube-transcript` | [badlogic/pi-skills](https://github.com/badlogic/pi-skills) | `90bb51c` (2026-06-06) |
+
+Those seven are the ones worth having here; upstream's `vscode` skill is skipped (this is
+a neovim setup). `brave-search` and `transcribe` want API keys; those belong in
+`~/.config/zsh/local.zsh`, never the repo.
+
+A skill that ships helper scripts is a self-contained npm project: its `package.json` and
+`package-lock.json` are committed, its `node_modules` is ignored by a `.gitignore` in the
+skill's own folder (not a root glob, so the folder stays portable if it's ever copied
+out). Step 6b of `install.sh` walks every skill with a `package.json` and runs `npm ci`,
+skipping ones whose `node_modules` is already newer than both manifests — so it's cheap to
+re-run and still picks up a lockfile bump. `SKIP_SKILL_DEPS=1` skips the step entirely;
+worth it when you don't want `browser-tools` dragging in puppeteer + Chromium.
+
 `herdr/SKILL.md` is a pointer, not a copy. herdr ships its own agent instructions inside
 the binary (`herdr --skill`), so the committed file keeps only the vendor's frontmatter —
 the description is what makes an agent reach for the skill at all — and its body tells the

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Print (creating if needed) the scratch directory for the current repo.
+# Shared by every agent skill and harness so that all of them resolve the same
+# path from the same inputs.
+#
+#   agent-scratch          keyed by repo + branch
+#   agent-scratch --repo   keyed by repo alone, for work that outlives a branch
+set -euo pipefail
+
+repo_only=false
+case "${1:-}" in
+"") ;;
+--repo) repo_only=true ;;
+*)
+	echo "usage: agent-scratch [--repo]" >&2
+	exit 2
+	;;
+esac
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+	echo "agent-scratch: not inside a git repository" >&2
+	exit 1
+}
+
+slug() {
+	printf '%s' "$1" | tr '[:upper:]' '[:lower:]' |
+		sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//'
+}
+
+# The hash keeps ~/code/go/api and ~/code/ts/api apart under the same basename.
+if $repo_only; then
+	hash=$(printf '%s' "$root" | shasum | cut -c1-6)
+	leaf="repo-$hash"
+else
+	# Detached HEAD would otherwise collapse every commit onto one directory.
+	branch=$(git -C "$root" rev-parse --abbrev-ref HEAD)
+	[ "$branch" = HEAD ] && branch=$(git -C "$root" rev-parse --short HEAD)
+	hash=$(printf '%s@%s' "$root" "$branch" | shasum | cut -c1-6)
+	leaf="$(slug "$branch")-$hash"
+fi
+
+base="${XDG_STATE_HOME:-$HOME/.local/state}/agents/scratch"
+dir="$base/$(slug "$(basename "$root")")/$leaf"
+
+mkdir -p "$dir"
+printf '%s\n' "$dir"

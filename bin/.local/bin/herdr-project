@@ -176,18 +176,18 @@ print(next((n for n in ("dev", "start", "serve") if n in scripts), ""))
   print ''
 }
 
-EXISTING=$(existing_workspace)
-if [[ -n $EXISTING ]]; then
-  (( FOCUS )) && herdr workspace focus "$EXISTING" >/dev/null
-  print "herdr-project: $LABEL already open at $EXISTING"
-  exit 0
+CREATED=$(existing_workspace)
+if [[ -n $CREATED ]]; then
+  (( FOCUS )) && herdr workspace focus "$CREATED" >/dev/null
+  print "herdr-project: $LABEL already open at $CREATED"
+else
+  CREATED=$(herdr workspace create --cwd "$ROOT" --label "$LABEL" --no-focus)
 fi
 
 (( SERVER_SET )) || SERVER=$(detect_server "$ROOT")
 
 # Everything is built unfocused so the layout doesn't flicker past the user
 # mid-build; focus moves once, at the end.
-CREATED=$(herdr workspace create --cwd "$ROOT" --label "$LABEL" --no-focus)
 WORKSPACE=$(print -r -- "$CREATED" | jget result workspace workspace_id)
 EDIT_TAB=$(print -r -- "$CREATED" | jget result tab tab_id)
 EDIT_PANE=$(print -r -- "$CREATED" | jget result root_pane pane_id)

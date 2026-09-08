@@ -46,10 +46,20 @@
     "gopls-lsp@claude-plugins-official": true
   },
   "effortLevel": "high",
-  "theme": "dark",
   "modelSettings": {
     "claude-opus-5": {
       "effortLevel": "high"
     }
+  },
+  "theme": "dark",
+  "voiceEnabled": true,
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "$HOME/.local/bin/herdr-agent-ctx statusline",
+    "refreshInterval": 15
   }
 }
