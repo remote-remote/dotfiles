@@ -1,165 +1,117 @@
 ---
 name: investigate
-description: Fan out oracles over a question, conclude in the open, and leave the answer in a vault note.
+description: Coordinate scoped codebase investigations, conclude in the open, and capture the answer in a vault note or a scratch map.
 disable-model-invocation: true
 ---
 
-Answer a question about a codebase with **oracles**: investigators that each explore one scope in isolation, leave a durable **index** behind, and report a path instead of their findings. You stay ignorant of the raw detail on purpose, because you have to survive into the conversation that queries these oracles next.
+Answer a codebase question with **oracles**: investigators that each explore one scope and leave a durable index. The [oracle skill](../oracle/SKILL.md) owns investigation, evidence standards, the index format, and revalidation. Read it when investigating locally; pass its absolute path to delegated investigators so they read it themselves.
 
-Three kinds of statement come out of an investigation, and keeping them apart is what makes the note worth reading a month later:
+This skill owns scopes, orchestration, synthesis, and capture. **Claims** are evidenced observations; **conclusions** are what they support; **decisions** are choices the user has made and what those choices rule out. Keep those categories separate. A conclusion without a decision is a finished investigation.
 
-- A **claim** is a fact with a file and a line behind it. Oracles write claims.
-- A **conclusion** is what the claims add up to: "X is happening, because Y." It answers the question. An oracle usually reaches it first, or it falls out of consolidation once the scopes sit side by side.
-- A **decision** is a choice made, and what it rules out.
+## 1. Set up the investigation
 
-Claims stay in scratch, where their bulk costs nobody anything. Conclusions and decisions go into a vault note that you write. An investigation that reaches a conclusion and decides nothing is a finished one, not a stalled one; most of them are.
+Capture the question and choose the output:
 
-Scratch is keyed by repo alone:
+- **Vault note** is the default, including for explanatory questions. It holds conclusions, open questions, and any decisions.
+- **Map-only** is an explicit lightweight output choice. Keep the answer in scratch and return `map.md`; note capture can be added later without repeating the investigation.
+
+A scope is an area one investigator can explore without another investigator's answer changing how it should search. Cut the question into independent scopes; use one oracle per scope. Keep dependent work sequential rather than forcing a fan-out. Scope names become filenames, so use `[a-z][a-z0-9_-]{0,31}`.
+
+**Preflight before creating a note.** Confirm `agent-scratch` is available, and `flow` for vault output. One scope runs locally. For several scopes, use Herdr only when the user has authorized that orchestration and `HERDR_ENV=1`; read the [Herdr skill](../herdr/SKILL.md) and its release-matched instructions before operating it. Otherwise report the limitation and investigate locally, one scope at a time. A missing required tool is a blocker to resolve with the user, not a reason to silently change the requested output.
+
+For a **new** investigation, allocate a unique directory under repo-stable scratch:
 
 ```bash
-agent-scratch --repo
+root="$(agent-scratch --repo)" || exit
+scratch="$(mktemp -d "$root/investigate-XXXXXXXX")" || exit
 ```
 
-Branch-keyed scratch would orphan the evidence the moment `flow work` checks out an issue branch, which is the exact point the investigation succeeds. Resolve it once, here, and hand the path to every oracle. The note records it too, so it stays findable once this session is gone.
+Repo-stable scratch is shared by every worktree of the repo, so it survives both a branch switch and the worktree the investigation started in; the unique child keeps separate investigations from overwriting one another. For a **resume**, use the exact recorded investigation directory instead. Never infer resume from a matching scope name or an existing index.
 
-**Early exit.** A question that is only "how does this work" ends at the map: nothing to conclude, nothing decided, nothing worth keeping past today. Skip step 2, stop after step 5, and hand the user `map.md`. A conclusion on its own is enough to keep the note. If you only discover mid-way that there is neither a conclusion nor a decision, `rm` the note and exit the same way.
+Create or update `$scratch/run.md` with the question, output mode, note path if any, and a scope table: subquestion, exclusions, entry points, index path, and status. Record owned agent names and pane IDs as they are created. This is the scratch manifest, not a second user-facing handoff. Keep the indices and `map.md` in this directory.
 
-## 1. Cut the question into scopes
-
-A **scope** is an area one agent can explore without needing another's answer. Two scopes are independent when neither one's findings change how you would search the other.
-
-Cut the question, then count:
-
-- **One scope**: investigate it yourself, here. Go to step 5 with your own index.
-- **Several**: one oracle each.
-
-Fan-out follows the cut, so let the cut decide it. Splitting a single scope across two agents to go faster buys you the same files read twice and the same claims written twice.
-
-Scope names become agent names and filenames, so keep them to `[a-z][a-z0-9_-]{0,31}`.
+Done when every scope has a bounded subquestion and an index path, and the output mode and execution method are known.
 
 ## 2. Open the note
 
-Two entry points. Use `project plan` when the investigation is into a project that already has a note in the vault, `investigate` otherwise:
+For vault output, open the note before investigating, including the one-scope branch. Use `project plan` for an investigation into an existing project, and `investigate` otherwise:
 
 ```bash
 flow investigate "<title>" --no-open --scratch "$scratch" --scope <a> --scope <b>
 flow project plan "<name>" --no-open --scratch "$scratch" --scope <a> --scope <b>
 ```
 
-Add `--task` when you know it, and `--project` on `investigate` when the work belongs to a project it is not scoped under. The note path is printed to stdout; hold onto it.
+Pass only the scopes in this run. Add `--task` when known, and `--project` on `investigate` when it belongs to a project. Confirm the path printed to stdout is an absolute path to a file that exists, since these commands exit 0 and print an explanatory message instead when the tool is unconfigured; record it in the manifest. Preserve existing note content and links to earlier investigations when a command resolves to an existing note. On resume, open the recorded note rather than scaffolding another.
 
-Write the question into `## Question` before you fan out. It is the one thing the oracles cannot reconstruct later, and every conclusion is measured against it.
+Write the question into `## Question`, and verify the frontmatter records this run's scratch path and scope names. Scaffolding over an existing note is a no-op that silently keeps the first run's frontmatter, so a second run into the same note, or a scope added mid-run, needs the frontmatter corrected by editing the note. That link is the only route back to the evidence. If this note covers several runs, preserve each run's question and scratch link rather than replacing the only reference to earlier evidence.
 
-## 3. Start the oracles
+For map-only output, the manifest holds the question; skip note creation, not the remaining workflow.
 
-Confirm `HERDR_ENV=1` and read `herdr --skill` once for the current CLI.
+## 3. Investigate each scope
 
-One pane per oracle, split off your own, your focus left where it is:
+Give each oracle:
 
-```bash
-herdr pane split --current --direction right --cwd "$PWD" --no-focus
-herdr agent start <scope> --kind claude --pane <returned-pane-id>
-```
+- The absolute path to the oracle skill, with an instruction to read and follow it.
+- The overall question and its bounded subquestion.
+- Its scope and exclusions, plus known entry points.
+- Its absolute index path, `$scratch/index-<scope>.md`.
+- An explicit resume instruction only when reusing that investigation's index.
 
-Prompt every oracle before waiting on any of them. That is what makes the fan-out concurrent, and folding a wait in beside the prompt here turns it back into one oracle at a time:
+**Local:** follow the oracle skill for each scope, write its index, then proceed to collection. No agent or pane is needed for the one-scope case.
 
-```bash
-herdr agent prompt <scope> "<the SOP below, plus this oracle's scope and scratch path>"
-```
+**Delegated:** use the installed Herdr instructions to split one pane per oracle from your own pane, keep your focus, and start an agent in the repository. Choose available agent names within the CLI's constraints, namespaced to this investigation; record their mapping to scopes and pane IDs. Scope names alone are not globally unique agent identities. Never reuse or close an unrelated agent based on its name.
 
-Give each oracle the SOP verbatim, its scope, the scratch path, and the entry points you already know. Every file you can name is context it spends on the question instead of on finding the door.
+Prompt every independent oracle before waiting on any. Keep successful oracles available for follow-ups until cleanup.
 
-## 4. Collect answers
+## 4. Collect results
 
-Take the oracles one at a time. Each answers with its index path, overview and conclusions:
+Read each oracle's reply and its index's Overview, Conclusions, Open, and Status sections. Surface results as they become available, labeled as provisional scope findings until synthesis. Keep exhaustive claims out of the coordinator's context unless needed to resolve a particular issue.
 
-```bash
-herdr agent wait <scope> --timeout 900000
-herdr agent read <scope> --source recent-unwrapped --lines 40
-```
+A wait ending is not proof of a completed index. Check the artifact exists, belongs to this question, and has a terminal status produced by the current attempt; a previous attempt's completed index is not a fresh result. If terminal output is empty or truncated, read the relevant sections from the index. On a timeout, failed agent, or malformed index, request completion or report the scope as blocked; use a bounded retry rather than waiting indefinitely. Partial evidence must remain labeled partial.
 
-Waiting here rather than at the fan-out is what frees you between scopes: the first oracle's conclusions reach the user while the rest are still working. Consolidation needs every index, and every scope has been waited on by the time this step ends, so step 5 adds no barrier of its own.
+Done when every scope is either answered, inconclusive, or blocked, with the reason recorded in the manifest. Continue with partial coverage when useful, but carry the gaps into the answer.
 
-Agents that run on the terminal's alternate screen leave no scrollback, so when that read comes back empty, read those sections out of the index file. Keeping them in the file is what makes the reply disposable.
+## 5. Synthesize a map
 
-Read the overviews and conclusions. Leave the claims where they are: their bulk is the exhaust the fan-out existed to keep out of you, and the oracles are still up if you need one.
+Write `$scratch/map.md` as an answer-oriented summary, not a merged dump of every claim. One scope needs no additional agent; summarize its index locally. For several delegated scopes, start a fresh consolidator using the same ownership bookkeeping. Give it the overall question, all index paths, scope statuses including missing or failed scopes, and the absolute oracle skill path to read for evidence standards (not its index-writing workflow). It writes the map and returns its path. When delegation is unavailable, synthesize locally.
 
-**Talk early, conclude after the map.** One scope's account is confidently wrong in exactly the ways the cross-scope view exists to catch, and a half-collected fan-out reads as a finished one. Put what has landed in front of the user as it lands; the Log stays shut until step 6.
+The map contains:
 
-## 5. Consolidate into a map
+- **Answer and status:** answered or inconclusive, with the supported answer and its limits.
+- **Supporting evidence:** only the claims needed for that answer, preserving claim IDs, revision-aware citations, and source-index links.
+- **Cross-scope findings:** duplicate claims reconciled, new conclusions tied to their supporting claims, and contradictions named rather than silently resolved.
+- **Rejected hypotheses:** those relevant to the question, with disconfirming evidence.
+- **Open:** unresolved questions, blocked scopes, and what would settle each.
+- **Indices:** links to the exhaustive evidence.
 
-**One index** is already the map. Copy it to `map.md`.
+Keep the map to roughly 150 lines or less; leave supporting detail in the indices rather than dropping qualifications to meet the target. The consolidator applies the oracle evidence standards and makes synthesis explicit rather than presenting inference as observation.
 
-**Several**: start one more agent, hand it only the index paths, and have it write `map.md` beside them. Its job is to reconcile the indices into one account: fold duplicate claims together, name the contradictions rather than picking a winner, carry every claim's evidence through, and collect what no index settled. It carries each index's conclusions through under the claims that hold them up, and states any conclusion that only becomes visible with the scopes side by side, which is the one thing it can see and no oracle can. It is a fresh context on purpose, so consolidation costs you nothing.
-
-Then read `map.md`. It is the first raw detail you take on.
+Read the map. Check that it addresses the question, supports its conclusions, and accounts for all scopes. Treat mismatched evidence baselines as a gap, not a coherent snapshot. For material contradictions or missing support, ask the relevant oracle to investigate and update its index, then refresh the map. Do not choose a winner by confidence alone. Stop with an inconclusive answer when the necessary evidence is unavailable or the authorized budget is exhausted.
 
 ## 6. Conclude in the open
 
-The map is an account of the code. What it adds up to, and what the user decides to do about it, go into the note's `## Log` as they land.
+Present the supported answer first, including limits and unresolved blockers. For vault output, write entries into `## Log` as conclusions and decisions land; map-only output keeps them in the map, clearly distinguished from code evidence. If the user switches to vault output, perform step 2 and capture the existing findings.
 
-**Answer the question first.** The conclusion is what most investigations produce, so write it before anything else: "X is happening, because Y", measured against `## Question`. Decisions may follow it or may not; zero is a normal count.
+- **Record without a confirmation prompt.** Capture conclusions and decisions already made; automatic recording does not authorize making decisions. Label proposed actions as recommendations until the user adopts them.
+- **Write granular entries.** Preserve distinct conclusions and small decisions, each with its supporting evidence or rationale.
+- **Carry evidence into the note.** Include the revision-aware citations and necessary local excerpts behind an entry so it survives scratch cleanup. Link to scratch for depth, not as the sole support for the answer.
+- **Supersede in place.** Preserve overturned conclusions and rejected hypotheses with the evidence that ruled them out. Omit search diaries.
+- **Keep open questions visible.** Record what is known, what remains unresolved, and what evidence or action would settle it. No supported conclusion is a valid result.
 
-**Write without asking.** There is no approval step. The vault is private, a wrong entry costs one `rm`, and a confirmation prompt rebuilds the friction that made manual recording fail.
+Follow-ups go to the relevant oracle, using the recorded agent mapping or running the oracle skill locally if that agent is gone. Have it update its index, then refresh the map and affected note entries. Resuming evidence follows the oracle's baseline-validation rules.
 
-**Write granular.** The small conclusions and the small decisions are the ones gone by tomorrow. Length is free here: this note is input to distillation, not a document anyone reads front to back.
+## 7. Finish and clean up
 
-**Carry the evidence through.** Bring the `file:line` of the claims behind an entry into the entry, so it still stands up after the scratch directory is cleared.
+An investigation is complete when every scope has a recorded outcome and the selected artifact contains either a supported answer or an explicit inconclusive result, plus any decisions actually made. The user may also pause or cancel it; record that state and remaining work.
 
-**Supersede in place.** A dead end, or a conclusion a later claim overturns, stays in the Log with the reason it died written under it. Deleted, it takes with it the only record that the idea was had, and the next person to have it pays for it twice.
+**Every exit runs cleanup:** vault output, map-only output, an inconclusive result, cancellation, or failure after partial startup. Close only the agents and panes this run opened, including the consolidator, using recorded IDs and verified ownership. If the user asks to keep them alive, record and report what remains. On resume after an interruption, verify stale IDs before acting; never close a pane whose ownership cannot be established.
 
-**Ask the oracle, not the map.** The oracles are still warm, and consolidation deletes the nuance that both conclusions and design live in:
+Return the note path, or `map.md` for map-only output, the completion status, and which panes were closed or remain open. Report cleanup failures rather than claiming success. Keep notes with inconclusive findings; remove a note only if it is a newly created scaffold with no substantive entries and the user requested removal. Preserve existing notes.
 
-```bash
-herdr agent prompt <scope> "<the question>"
-herdr agent wait <scope> --timeout 300000
-```
-
-## 7. Close down
-
-Done when the Log answers the question, and holds whatever was decided about the answer.
-
-Close the panes you opened, and say which ones you closed. A pane the user does not know about is a pane they find tomorrow.
-
-**The note is the handoff**, so write no other document. It carries the question, the conclusions, the decisions, the scratch path and the scope names, which is everything the next session or the distillation skills need.
+The selected artifact is the user-facing handoff; the scratch manifest and indices are its supporting material. Write no additional handoff document.
 
 ## Resuming
 
-An investigation can span days, and its note is self-describing: frontmatter carries `scratch:` and `scopes:`.
+Start from the note's recorded scratch link or the map-only run's manifest. Read `run.md`, retain the original question and index paths, and inspect any live owned agents before starting replacements. Missing scratch evidence is a gap to reconstruct, not permission to trust an old summary as current fact.
 
-Scope names are herdr agent names, so restart a scope by starting an agent under the same name and handing it the SOP, the scratch path, and the path to its own `index-<scope>.md`. Told to read its index first, it resumes from what it already knows rather than re-reading the code.
-
-## The oracle SOP
-
-Hand this to each oracle verbatim, then append its scope, its scratch path, and its entry points.
-
-> You are an oracle. You explore one scope of a codebase and leave behind an index that someone who has not read the code will rely on.
->
-> Write your index into the scratch directory you were given, as `index-<scope>.md`. If it is already there, read it first: you are resuming, and what it already claims does not need finding twice.
->
-> ```markdown
-> # <scope>
->
-> ## Overview
-> Three to five lines: what this area is, and the one thing that would most surprise
-> someone who had not read it.
->
-> ## Conclusions
-> - What the claims below add up to, naming the ones that carry it.
->
-> ## Claims
-> - A statement of fact about the code. `path/to/file.ts:412`
->
-> ## Open
-> - A question this scope could not settle, and what would settle it.
-> ```
->
-> A **claim** is a fact with a file and a line behind it: "the tenant join is unconditional, `UserRepo.ts:412`". Keep inference out of it. Write what the code does, not what you take it to mean.
->
-> Inference has its own section. A **conclusion** is what your claims add up to, "X is happening, because Y", and it holds only for as long as the claims named under it do. What you believe but cannot pin to claims is an Open, not a conclusion, and a scope that concludes nothing says so.
->
-> Leave your reasoning out of all of it. The files you opened, the searches that missed, the theory you dropped: that is exhaust, and keeping it out of the next reader's head is the whole point of the index.
->
-> Reply with the index path, your Overview and your Conclusions, and nothing else.
->
-> Then stay put. Follow-up questions about your scope are coming, and they will want the nuance the index left out.
+Give resumed oracles the same inputs as step 3 plus an explicit resume instruction. They validate the code baseline before reusing claims. Recollect affected scopes, refresh the map, and supersede changed note entries. Reuse a live owned agent or allocate a new available name and update the manifest; scope identity does not depend on agent lifetime.

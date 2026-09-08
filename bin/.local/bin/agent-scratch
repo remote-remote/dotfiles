@@ -3,8 +3,9 @@
 # Shared by every agent skill and harness so that all of them resolve the same
 # path from the same inputs.
 #
-#   agent-scratch          keyed by repo + branch
+#   agent-scratch          keyed by checkout + branch
 #   agent-scratch --repo   keyed by repo alone, for work that outlives a branch
+#                          or the worktree it started in
 set -euo pipefail
 
 repo_only=false
@@ -27,9 +28,15 @@ slug() {
 		sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//'
 }
 
+# Every linked worktree reports the main worktree first, so this is the one path
+# that identifies the repo rather than the checkout. It is not always a working
+# tree (bare repos and submodules report a git dir), so use it only as a key.
+repo=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
+[ -n "$repo" ] || repo=$root
+
 # The hash keeps ~/code/go/api and ~/code/ts/api apart under the same basename.
 if $repo_only; then
-	hash=$(printf '%s' "$root" | shasum | cut -c1-6)
+	hash=$(printf '%s' "$repo" | shasum | cut -c1-6)
 	leaf="repo-$hash"
 else
 	# Detached HEAD would otherwise collapse every commit onto one directory.
@@ -40,7 +47,7 @@ else
 fi
 
 base="${XDG_STATE_HOME:-$HOME/.local/state}/agents/scratch"
-dir="$base/$(slug "$(basename "$root")")/$leaf"
+dir="$base/$(slug "$(basename "$repo")")/$leaf"
 
 mkdir -p "$dir"
 printf '%s\n' "$dir"
