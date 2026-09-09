@@ -74,9 +74,9 @@ edit_scrollback = "prefix+shift+e"
 # cycle_pane_next = "prefix+tab"
 # cycle_pane_previous = "prefix+shift+tab"
 # last_pane = ""          # optional, unset by default; bind e.g. "prefix+tab" for global back-and-forth
-# Splits go through herdr-split so new panes anchor to the workspace instead of
-# the source pane's live cwd (see bin/.local/bin/herdr-split). The native
-# actions are unset so the custom commands own these keys.
+# Splits use an explicit workspace pin or the pane's git root when available,
+# rather than the UI-focused pane's live cwd (see bin/.local/bin/herdr-split).
+# The native actions are unset so the custom commands own these keys.
 split_vertical = ""
 split_horizontal = ""
 close_pane = "prefix+x"

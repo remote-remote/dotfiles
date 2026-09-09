@@ -15,7 +15,7 @@ WORKSPACE=${HERDR_ACTIVE_WORKSPACE_ID:-${HERDR_WORKSPACE_ID:-}}
 if [[ -z $WORKSPACE ]]; then
   WORKSPACE=$(herdr api snapshot | python3 -c '
 import json, sys
-ws = next((w for w in json.load(sys.stdin)["snapshot"]["workspaces"] if w.get("focused")), None)
+ws = next((w for w in json.load(sys.stdin)["result"]["snapshot"]["workspaces"] if w.get("focused")), None)
 print(ws["workspace_id"] if ws else "")
 ')
 fi
