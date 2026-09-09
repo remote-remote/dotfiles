@@ -38,8 +38,3 @@ brew "markmarkoh/lt/lt"
 
 # Tiling window manager (untrusted tap)
 cask "aerospace"
-cask "font-hack-nerd-font"
-# Keyboard customiser
-cask "karabiner-elements"
-# Open-source keystroke visualiser
-cask "keycastr"

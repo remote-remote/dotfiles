@@ -24,12 +24,15 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
-vim.o.scrolloff = 15
 
 vim.o.clipboard = "unnamedplus"
 
 vim.wo.number = true
 vim.wo.relativenumber = true
+
+-- There is some kind of rendering problem with virtual text causing wraps to be real funky
+-- vim.o.scrolloff = 15
+vim.o.scrolloff = 0
 
 vim.o.undofile = true
 

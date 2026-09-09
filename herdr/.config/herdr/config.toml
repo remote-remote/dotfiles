@@ -260,7 +260,7 @@ pane_borders = true
 pane_gaps = true
 
 # Show detected/reported agent labels in split pane borders when no manual pane name is set.
-# show_agent_labels_on_pane_borders = false
+show_agent_labels_on_pane_borders = true
 
 # Hide the tab row when a workspace has exactly one tab.
 # New tabs can still be created with the configured keybinding.
@@ -294,12 +294,12 @@ rows = [["state_icon", "workspace", "tab"], ["agent"]]
 claude = [
   ["state_icon", "workspace", "tab"],
   ["terminal_title_stripped"],
-  ["agent", { token = "$ctx", dim = true }, { token = "$cache", fg = "#c0a36e" }, { token = "$cold", fg = "#ff5d62" }],
+  [{ token = "agent" }, { token = "$ctx", dim = true }, { token = "$cache", fg = "#c0a36e" }, { token = "$cold", fg = "#ff5d62" }],
 ]
 # pi titles its terminal "π - <cwd basename>", which only restates row 1.
 pi = [
   ["state_icon", "workspace", "tab"],
-  ["agent", { token = "$ctx", dim = true }, { token = "$cache", fg = "#c0a36e" }, { token = "$cold", fg = "#ff5d62" }],
+  [{ token = "agent" }, { token = "$ctx", dim = true }, { token = "$cache", fg = "#c0a36e" }, { token = "$cold", fg = "#ff5d62" }],
 ]
 
 # Expanded space rows. Built-ins are state_icon, state_text, workspace, branch, and git_status.
@@ -315,7 +315,6 @@ pi = [
 # accent = "cyan"
 
 # Background notification popup delivery
-show_agent_labels_on_pane_borders = true
 [ui.toast]
 # off = disable pop-up notifications
 # herdr = show in-app toasts
