@@ -197,6 +197,17 @@ sys.exit(int(os.environ.get("TEST_FZF_EXIT", "0")))
         self.assertEqual((self.base / "candidates").read_text().splitlines(), [str(nested)])
         self.assertIn(str(nested), self.calls("workspace", "create")[0])
 
+    def test_picker_missing_root_does_not_discard_selection(self):
+        nested = self.root / "nested"
+        nested.mkdir()
+        missing = self.base / "missing"
+        (self.bin / "sessionizer.conf").write_text(
+            f"SESSIONIZER_DIRS=('{missing}' '{self.root}')\nMIN_DEPTH=1\nMAX_DEPTH=1\n")
+        self.env["TEST_PICK"] = str(nested)
+        self.run_script("--no-focus")
+        self.assertEqual((self.base / "candidates").read_text().splitlines(), [str(nested)])
+        self.assertIn(str(nested), self.calls("workspace", "create")[0])
+
     def test_invalid_input_and_api_failure_do_not_create(self):
         for args, code in [([self.root, "--agents", "0"], 2),
                            ([self.root, "--agents", "nope"], 2),

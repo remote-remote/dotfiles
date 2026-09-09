@@ -52,8 +52,22 @@ if [[ -z $DIR ]]; then
 
   [[ $MIN_DEPTH == <-> && $MAX_DEPTH == <-> && $MIN_DEPTH -le $MAX_DEPTH ]] \
     || { print -u2 "herdr-sessionizer: depths must be nonnegative integers with MIN_DEPTH <= MAX_DEPTH"; exit 2 }
-  (( ${#SESSIONIZER_DIRS[@]} )) || exit 0
-  DIR=$(find "${SESSIONIZER_DIRS[@]}" -mindepth "$MIN_DEPTH" -maxdepth "$MAX_DEPTH" -type d | fzf) || {
+  SEARCH_DIRS=()
+  for root in "${SESSIONIZER_DIRS[@]}"; do
+    [[ -d $root && -r $root && -x $root ]] && SEARCH_DIRS+=("$root")
+  done
+  (( ${#SEARCH_DIRS[@]} )) || {
+    print -u2 "herdr-sessionizer: no accessible search roots; SESSIONIZER_DIRS entries are missing or unreadable"
+    exit 1
+  }
+
+  # Keep partial results from inaccessible descendants. Only fzf's status should
+  # decide whether the user selected something, canceled, or found no matches.
+  DIR=$(
+    {
+      find "${SEARCH_DIRS[@]}" -mindepth "$MIN_DEPTH" -maxdepth "$MAX_DEPTH" -type d 2>/dev/null || true
+    } | fzf
+  ) || {
     rc=$?
     # fzf returns 1 for no matches, 130 for cancellation.
     (( rc == 1 || rc == 130 )) && exit 0
