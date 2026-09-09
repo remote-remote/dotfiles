@@ -211,5 +211,5 @@ Next steps:
   - Open a new shell (or `exec zsh`) to pick up the home-manager environment.
   - Optional: create ~/.config/zsh/local.zsh for machine-local secrets/aliases.
   - Optional: create ~/dotfiles/bin/.local/bin/sessionizer.conf to set
-    SESSIONIZER_DIRS / MIN_DEPTH / MAX_DEPTH for tmux-sessionizer.
+    SESSIONIZER_DIRS / MIN_DEPTH / MAX_DEPTH for tmux-sessionizer and herdr-sessionizer.
 EOF

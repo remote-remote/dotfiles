@@ -23,7 +23,7 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `aerospace` → `~/.config/aerospace/`
 - `tmux` → `~/.config/tmux/` (plugins are installed by tpm into a gitignored subdir)
 - `nvim` → `~/.config/nvim/`
-- `bin` → `~/.local/bin/` (scripts: `ghpr`, `csvify`, `tmux-sessionizer`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-project`, `agent-skills`)
+- `bin` → `~/.local/bin/` (scripts: `ghpr`, `csvify`, `tmux-sessionizer`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-sessionizer`, `agent-skills`)
 - `nix` → `~/.config/nix/nix.conf` (enables `nix-command` + `flakes`; stowed first so home-manager can run)
 - `herdr` → `~/.config/herdr/` (`config.toml` + `plugins.lock.json`)
 - `claude` → `~/.claude/` (`CLAUDE.md`, `settings.json`, `commands/`, `agents/`, `skills/`)
@@ -36,29 +36,46 @@ To re-stow everything: `cd ~/dotfiles && stow --restow aerospace tmux nvim bin n
 
 ### herdr workspaces
 
-`herdr-project <repo>` builds the standard per-repo workspace: an `edit` tab running
-nvim, a `run` tab split into a scratch shell (top) and the repo's server (bottom), and
-an `agents` tab of three bare shells. Nothing is started in the agents tab — `herdr
-agent start` wants a pane already sitting at a prompt, so the template only makes the
-room.
+`prefix+f` opens `herdr-sessionizer` in an fzf popup. Pick a directory to focus its
+existing workspace or build an `edit` tab running nvim, a `run` tab split into a
+scratch shell (top) and the project's server (bottom), and an `agents` tab of three
+bare shells. The selected directory is the root, whether it is a repo, a subdirectory
+of one, or outside git entirely. Canceling the picker does nothing.
+
+Nothing is started in the agents tab. `herdr agent start` wants a pane already
+sitting at a prompt, so the template only makes room. New workspaces are built
+unfocused, then focused on `edit` once the layout is complete.
 
 ```sh
-herdr-project ~/code/ts/foo          # build it, or focus it if it's already open
-herdr-project . --agents 2           # fewer agent panes
-herdr-project . --server 'just up'   # override the detected server command
-herdr-project . --server ''          # leave the server pane at a prompt
+herdr-sessionizer                      # open the directory picker
+herdr-sessionizer ~/code/ts/foo        # skip the picker; build or reuse
+herdr-sessionizer . --agents 2         # fewer agent panes
+herdr-sessionizer . --server 'just up' # override the detected server command
+herdr-sessionizer . --server ''        # leave the server pane at a prompt
+herdr-sessionizer . --no-focus         # build or reuse without changing focus
 ```
 
-Re-running is safe: a workspace counts as that repo's when its label matches the repo
-directory name *and* it still holds a pane inside the repo, so `~/code/go/api` and
-`~/code/ts/api` don't steal each other's workspace.
+Reuse requires a label matching the directory basename *and* a live pane inside the
+selected root, so `~/code/go/api` and `~/code/ts/api` don't steal each other's
+workspace. Reuse leaves the existing layout and commands alone.
 
-The server command is sniffed from files in the repo (`bin/dev`, a `dev`/`server`
+Both `herdr-sessionizer` and `tmux-sessionizer` read the machine-local, gitignored
+`bin/.local/bin/sessionizer.conf`: `SESSIONIZER_DIRS` is a zsh array of search roots;
+`MIN_DEPTH` and `MAX_DEPTH` are find depths relative to those roots. Without a config,
+herdr-sessionizer lists immediate directories in `$HOME` (both depths default to 1).
+Set all three values for your project layout when creating the shared config.
+`prefix+w` and `prefix+s` remain the pickers for what is already open.
+
+The server command is sniffed from project files (`bin/dev`, a `dev`/`server`
 recipe in a justfile or Makefile, `package.json` scripts, `mix.exs`, `manage.py`, hugo,
-`go.mod`) and never from `command -v` — the pane's shell picks up direnv/nix/nvm and
-the script's shell doesn't, so `mix` can be runnable in the pane while missing from
-the script's PATH. Ambiguous repos (a `cmd/` with two binaries, a `package.json` with
-no dev script) get no guess and a plain prompt.
+`go.mod`) and never from `command -v`: the pane's shell enters the project's
+direnv/nvm environment, while the script's shell does not. A project's `mix` or
+`pnpm` may therefore be runnable in the pane but missing from the script's PATH.
+Ambiguous projects (a `cmd/` with two binaries, a `package.json` with no dev/start/serve
+script) get no guess and a plain prompt.
+
+`herdr-sessionizer` replaces `herdr-project`. After updating an existing install,
+`stow --restow bin` installs the new script and removes the old dangling symlink.
 
 ### herdr plugins
 
