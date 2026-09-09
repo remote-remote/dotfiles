@@ -129,6 +129,13 @@ harness — it's the multiplexer that hosts agent panes — so it has no part in
 its per-harness hook/extension glue is machine-local and installed by `herdr
 integration install` (step 10 of `install.sh`), not committed.
 
+One exception: for claude, that installer also *wires* its hook into
+`claude/.claude/settings.json`, which is committed. It writes an absolute path and
+matches an existing entry only by exact string, so it can't see the committed
+`$HOME` spelling of the same hook and appends a duplicate on every run. Step 10
+prunes that duplicate afterwards; the committed `$HOME` form is the one that
+survives, so no username lands in the repo.
+
 **Instructions — one file, two names.** The canonical global instructions live in
 `agent-instructions/AGENTS.md`. The `claude` and `pi` packages don't copy it; they
 symlink to it, so after stowing you get a two-hop chain that resolves to the one

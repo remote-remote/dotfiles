@@ -12,6 +12,32 @@ STOW_PACKAGES=(nix aerospace tmux nvim bin herdr claude pi agents)
 log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# `herdr integration install claude` appends its SessionStart hook with an
+# absolute path and recognises an existing entry only by exact string match.
+# The committed settings.json spells the same hook with "$HOME" so no username
+# ends up in the repo, which herdr can't match — so each run appends a second
+# copy. Drop any hook entry that duplicates an earlier one once $HOME and shell
+# quoting are folded out, keeping the first (committed) spelling.
+prune_duplicate_claude_hooks() {
+  local settings="$HOME/.claude/settings.json" pruned
+  [ -f "$settings" ] || return 0
+  have jq || { echo "jq missing; skipping claude hook de-duplication" >&2; return 0; }
+
+  pruned="$(jq --arg home "$HOME" '
+    def norm: walk(if type == "string"
+                   then gsub("\\$HOME"; $home) | gsub("[\"\u0027]"; "")
+                   else . end);
+    .hooks |= with_entries(
+      .value |= reduce .[] as $entry ([];
+        if any(.[]; norm == ($entry | norm)) then . else . + [$entry] end)
+    )
+  ' "$settings")" || { echo "could not read $settings; skipping hook de-duplication" >&2; return 0; }
+
+  # Written in place, not moved: this path is a stow symlink into the repo and
+  # `mv` would replace it with a real file.
+  printf '%s\n' "$pruned" > "$settings"
+}
+
 if [ "$(uname)" != "Darwin" ]; then
   echo "This bootstrap targets macOS. Aborting." >&2
   exit 1
@@ -172,9 +198,11 @@ if ! have claude; then
   curl -fsSL https://claude.ai/install.sh | bash
 fi
 
-if command -v nvm >/dev/null 2>&1; then
-  log "Installing pi"
-  curl -fsSL https://pi.dev/install.sh | sh
+if ! have pi; then 
+  if command -v nvm >/dev/null 2>&1; then
+    log "Installing pi"
+    curl -fsSL https://pi.dev/install.sh | sh
+  fi
 fi
 
 # 8. tmux plugin manager + plugins.
@@ -200,8 +228,12 @@ fi
 #    versions these files (`herdr integration status` reports a version), so
 #    they aren't committed to the repo — just re-run the installer here.
 if have herdr; then
-  have claude && { log "Installing herdr claude integration"; herdr integration install claude; }
-  have pi     && { log "Installing herdr pi integration";     herdr integration install pi; }
+  have claude && {
+    log "Installing herdr claude integration"
+    herdr integration install claude
+    prune_duplicate_claude_hooks
+  }
+  have pi && { log "Installing herdr pi integration"; herdr integration install pi; }
 fi
 
 log "Done."
@@ -210,6 +242,10 @@ cat <<'EOF'
 Next steps:
   - Open a new shell (or `exec zsh`) to pick up the home-manager environment.
   - Optional: create ~/.config/zsh/local.zsh for machine-local secrets/aliases.
-  - Optional: create ~/dotfiles/bin/.local/bin/sessionizer.conf to set
-    SESSIONIZER_DIRS / MIN_DEPTH / MAX_DEPTH for tmux-sessionizer and herdr-sessionizer.
+  - Optional: create ~/.local/bin/sessionizer.conf that exports SESSIONIZER_DIRS
+    for tmux-sessionizer and herdr-sessionizer. Both read it beside themselves
+    as invoked, so it stays out of the repo. herdr-sessionizer takes a per-entry
+    depth suffix, a bare path meaning that directory alone:
+
+      export SESSIONIZER_DIRS=(~/code:1:2 ~/dotfiles)
 EOF
