@@ -23,7 +23,7 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `aerospace` → `~/.config/aerospace/`
 - `tmux` → `~/.config/tmux/` (plugins are installed by tpm into a gitignored subdir)
 - `nvim` → `~/.config/nvim/`
-- `bin` → `~/.local/bin/` (scripts: `ghpr`, `csvify`, `tmux-sessionizer`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-sessionizer`, `agent-skills`)
+- `bin` → `~/.local/bin/` (scripts: `ghpr`, `csvify`, `tmux-sessionizer`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-sessionizer`, `sessionizer-dirs`, `agent-skills`)
 - `nix` → `~/.config/nix/nix.conf` (enables `nix-command` + `flakes`; stowed first so home-manager can run)
 - `herdr` → `~/.config/herdr/` (`config.toml` + `plugins.lock.json`)
 - `claude` → `~/.claude/` (`CLAUDE.md`, `settings.json`, `commands/`, `agents/`, `skills/`)
@@ -59,12 +59,21 @@ Reuse requires a label matching the directory basename *and* a live pane inside 
 selected root, so `~/code/go/api` and `~/code/ts/api` don't steal each other's
 workspace. Reuse leaves the existing layout and commands alone.
 
-Both `herdr-sessionizer` and `tmux-sessionizer` read the machine-local, gitignored
-`bin/.local/bin/sessionizer.conf`: `SESSIONIZER_DIRS` is a zsh array of search roots;
-`MIN_DEPTH` and `MAX_DEPTH` are find depths relative to those roots. Without a config,
-herdr-sessionizer lists immediate directories in `$HOME` (both depths default to 1).
-Set all three values for your project layout when creating the shared config.
-`prefix+w` and `prefix+s` remain the pickers for what is already open.
+Both `herdr-sessionizer` and `tmux-sessionizer` get their candidate directories from
+`sessionizer-dirs`, so the format lives in one place. It reads the machine-local,
+gitignored `sessionizer.conf` beside itself as invoked (`~/.local/bin`, not the
+checkout its symlink points at). `SESSIONIZER_DIRS` is a zsh array whose entries are
+paths, each optionally suffixed `:MIN:MAX` to search that root at those find depths;
+a bare path offers just that directory:
+
+```zsh
+export SESSIONIZER_DIRS=(~/code:1:2 ~/dotfiles)
+```
+
+A bare entry falls back to `MIN_DEPTH` / `MAX_DEPTH` when the conf sets them, so confs
+predating per-entry depths keep working. Without a config, both list the immediate
+directories in `$HOME`. `prefix+w` and `prefix+s` remain the pickers for what is
+already open.
 
 The server command is sniffed from project files (`bin/dev`, a `dev`/`server`
 recipe in a justfile or Makefile, `package.json` scripts, `mix.exs`, `manage.py`, hugo,

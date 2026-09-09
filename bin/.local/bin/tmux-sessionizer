@@ -1,24 +1,23 @@
 #!/usr/bin/env zsh
 
-# Get the directory of the script
-SCRIPT_DIR=$(dirname "$0")
-
-# Default SESSIONIZER_DIRS
-SESSIONIZER_DIRS=(
-  "$HOME"
-)
-
-# Source the configuration file relative to the script's location
-CONFIG_FILE="$SCRIPT_DIR/sessionizer.conf"
-
-if [ -f "$CONFIG_FILE" ]; then
-  source "$CONFIG_FILE"
-fi
+# Pick a directory and switch to its tmux session, creating it if needed.
+#
+# With no argument, pick from what `sessionizer-dirs` offers -- the same
+# sessionizer.conf that herdr-sessionizer reads, whose entries are paths with an
+# optional :MIN:MAX search-depth suffix. See that script for the format.
+#
+#   SESSIONIZER_DIRS=(~/code:1:2 ~/dotfiles)
+#
+# usage: tmux-sessionizer [dir]
 
 if [[ $# -eq 1 ]]; then
     selected=$1
 else
-  selected=$(find "${SESSIONIZER_DIRS[@]}" -mindepth $MIN_DEPTH -maxdepth $MAX_DEPTH -type d | fzf)
+  # Listed up front rather than piped straight into fzf: a malformed conf has to
+  # surface as its own exit status, not get flattened into fzf's "no matches".
+  candidates=$("${0:a:h}/sessionizer-dirs") || exit $?
+  [[ -n $candidates ]] || exit 0
+  selected=$(print -rl -- "${(@f)candidates}" | fzf)
 fi
 
 if [[ -z $selected ]]; then

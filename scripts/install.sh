@@ -243,9 +243,9 @@ Next steps:
   - Open a new shell (or `exec zsh`) to pick up the home-manager environment.
   - Optional: create ~/.config/zsh/local.zsh for machine-local secrets/aliases.
   - Optional: create ~/.local/bin/sessionizer.conf that exports SESSIONIZER_DIRS
-    for tmux-sessionizer and herdr-sessionizer. Both read it beside themselves
-    as invoked, so it stays out of the repo. herdr-sessionizer takes a per-entry
-    depth suffix, a bare path meaning that directory alone:
+    for tmux-sessionizer and herdr-sessionizer. Both read it through
+    sessionizer-dirs, beside itself as invoked, so it stays out of the repo.
+    Entries take a :MIN:MAX depth suffix; a bare path means that directory alone:
 
       export SESSIONIZER_DIRS=(~/code:1:2 ~/dotfiles)
 EOF

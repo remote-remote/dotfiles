@@ -6,17 +6,11 @@
 #   tab "run"     the project's server + a scratch shell, split top/bottom
 #   tab "agents"  a few bare shells (default 3); no agents are started
 #
-# With no directory, offer the SESSIONIZER_DIRS entries from sessionizer.conf
-# beside this script as invoked (~/.local/bin when run from PATH, not the
-# dotfiles checkout the symlink points at). Each entry is a path, optionally
-# suffixed :MIN:MAX to search that root at those find depths; a bare path
-# offers just that directory.
+# With no directory, pick from what `sessionizer-dirs` offers -- the same
+# sessionizer.conf that tmux-sessionizer reads, whose entries are paths with an
+# optional :MIN:MAX search-depth suffix. See that script for the format.
 #
 #   SESSIONIZER_DIRS=(~/code:1:2 ~/dotfiles)
-#
-# A bare entry falls back to MIN_DEPTH / MAX_DEPTH when the conf sets them, so
-# confs predating per-entry depths keep their behavior. Default: immediate
-# directories in $HOME.
 #
 # The selected directory is the root, even inside a repo or outside git entirely.
 # Reuse requires both a matching basename label and a live pane inside that root.
@@ -54,55 +48,12 @@ done
 [[ $AGENTS == <-> && $AGENTS -ge 1 ]] || { print -u2 "herdr-sessionizer: --agents needs a positive integer"; exit 2 }
 
 if [[ -z $DIR ]]; then
-  SESSIONIZER_DIRS=("$HOME:1:1")
-  CONFIG_FILE=${0:a:h}/sessionizer.conf
-  [[ ! -f $CONFIG_FILE ]] || source "$CONFIG_FILE"
+  # Listed up front rather than piped straight into fzf: a malformed conf has to
+  # surface as its own exit status, not get flattened into fzf's "no matches".
+  CANDIDATES=$("${0:a:h}/sessionizer-dirs") || exit $?
+  [[ -n $CANDIDATES ]] || exit 0
 
-  # Depths for entries that carry none. Unset globals mean a bare entry is the
-  # directory itself; a conf that sets them keeps aiming bare entries at its
-  # own depths.
-  BARE_MIN=${MIN_DEPTH-0}
-  BARE_MAX=${MAX_DEPTH-0}
-  [[ $BARE_MIN == <-> && $BARE_MAX == <-> && $BARE_MIN -le $BARE_MAX ]] \
-    || { print -u2 "herdr-sessionizer: MIN_DEPTH / MAX_DEPTH must be nonnegative integers with MIN_DEPTH <= MAX_DEPTH"; exit 2 }
-
-  # Trailing :MIN:MAX wins over the bare defaults. Matching the last two colon
-  # fields leaves earlier colons to the path.
-  SEARCH_ROOTS=()
-  SEARCH_MINS=()
-  SEARCH_MAXS=()
-  for spec in "${SESSIONIZER_DIRS[@]}"; do
-    if [[ $spec == *:<->:<-> ]]; then
-      root=${${spec%:*}%:*}
-      min=${${spec%:*}##*:}
-      max=${spec##*:}
-      [[ $min -le $max ]] \
-        || { print -u2 "herdr-sessionizer: $spec: depths must be MIN:MAX with MIN <= MAX"; exit 2 }
-    else
-      root=$spec
-      min=$BARE_MIN
-      max=$BARE_MAX
-    fi
-    [[ -d $root && -r $root && -x $root ]] || continue
-    SEARCH_ROOTS+=("$root")
-    SEARCH_MINS+=("$min")
-    SEARCH_MAXS+=("$max")
-  done
-  (( ${#SEARCH_ROOTS[@]} )) || {
-    print -u2 "herdr-sessionizer: no accessible search roots; SESSIONIZER_DIRS entries are missing or unreadable"
-    exit 1
-  }
-
-  # Keep partial results from inaccessible descendants. Only fzf's status should
-  # decide whether the user selected something, canceled, or found no matches.
-  DIR=$(
-    {
-      for (( i = 1; i <= ${#SEARCH_ROOTS[@]}; i++ )); do
-        find "${SEARCH_ROOTS[i]}" -mindepth "${SEARCH_MINS[i]}" -maxdepth "${SEARCH_MAXS[i]}" \
-          -type d 2>/dev/null || true
-      done
-    } | fzf
-  ) || {
+  DIR=$(print -rl -- "${(@f)CANDIDATES}" | fzf) || {
     rc=$?
     # fzf returns 1 for no matches, 130 for cancellation.
     (( rc == 1 || rc == 130 )) && exit 0
