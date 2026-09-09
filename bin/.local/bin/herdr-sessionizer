@@ -1,0 +1,211 @@
+#!/usr/bin/env zsh
+
+# Pick a directory and focus or build its standard herdr workspace.
+#
+#   tab "edit"    nvim at the selected root
+#   tab "run"     the project's server + a scratch shell, split top/bottom
+#   tab "agents"  a few bare shells (default 3); no agents are started
+#
+# With no directory, search SESSIONIZER_DIRS using MIN_DEPTH / MAX_DEPTH from
+# sessionizer.conf beside this script. Defaults: immediate directories in $HOME.
+# The selected directory is the root, even inside a repo or outside git entirely.
+# Reuse requires both a matching basename label and a live pane inside that root.
+#
+# Server detection uses project files, not `command -v`: the pane's shell enters
+# the project's direnv/nvm environment; this script's shell does not.
+# `--server CMD` overrides detection; `--server ''` leaves a plain prompt.
+#
+# usage: herdr-sessionizer [dir] [--agents N] [--server CMD] [--no-focus]
+
+set -euo pipefail
+
+DIR=""
+AGENTS=3
+SERVER=""
+SERVER_SET=0
+FOCUS=1
+
+while (( $# )); do
+  case $1 in
+    --agents)   AGENTS=${2:?--agents needs a count}; shift 2 ;;
+    --server)   SERVER=${2?--server needs a command}; SERVER_SET=1; shift 2 ;;
+    --no-focus) FOCUS=0; shift ;;
+    -h|--help)  awk 'NR == 1 { next }
+                      /^$/ && !seen { next }
+                      /^#/ { seen = 1; sub(/^# ?/, ""); print; next }
+                      { exit }' "$0"
+                exit 0 ;;
+    -*)         print -u2 "herdr-sessionizer: unknown option $1"; exit 2 ;;
+    *)          [[ -z $DIR ]] || { print -u2 "herdr-sessionizer: unexpected argument $1"; exit 2 }
+                DIR=$1; shift ;;
+  esac
+done
+
+[[ $AGENTS == <-> && $AGENTS -ge 1 ]] || { print -u2 "herdr-sessionizer: --agents needs a positive integer"; exit 2 }
+
+if [[ -z $DIR ]]; then
+  SESSIONIZER_DIRS=("$HOME")
+  MIN_DEPTH=1
+  MAX_DEPTH=1
+  CONFIG_FILE=${0:A:h}/sessionizer.conf
+  [[ ! -f $CONFIG_FILE ]] || source "$CONFIG_FILE"
+
+  [[ $MIN_DEPTH == <-> && $MAX_DEPTH == <-> && $MIN_DEPTH -le $MAX_DEPTH ]] \
+    || { print -u2 "herdr-sessionizer: depths must be nonnegative integers with MIN_DEPTH <= MAX_DEPTH"; exit 2 }
+  (( ${#SESSIONIZER_DIRS[@]} )) || exit 0
+  DIR=$(find "${SESSIONIZER_DIRS[@]}" -mindepth "$MIN_DEPTH" -maxdepth "$MAX_DEPTH" -type d | fzf) || {
+    rc=$?
+    # fzf returns 1 for no matches, 130 for cancellation.
+    (( rc == 1 || rc == 130 )) && exit 0
+    exit "$rc"
+  }
+  [[ -n $DIR ]] || exit 0
+fi
+
+ROOT=${DIR:A}
+[[ -d $ROOT ]] || { print -u2 "herdr-sessionizer: not a directory: $ROOT"; exit 1 }
+LABEL=${ROOT:t}
+
+jget() {
+  python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+for k in sys.argv[1:]:
+    d = d[k]
+print(d)
+' "$@"
+}
+
+existing_workspace() {
+  herdr api snapshot | python3 -c '
+import json, os, sys
+root, label = sys.argv[1], sys.argv[2]
+snap = json.load(sys.stdin)["result"]["snapshot"]
+def inside(pane):
+    cwd = pane.get("cwd") or ""
+    return cwd == root or cwd.startswith(root.rstrip(os.sep) + os.sep)
+live = {p["workspace_id"] for p in snap.get("panes", []) if inside(p)}
+for w in snap.get("workspaces", []):
+    if w.get("label") == label and w["workspace_id"] in live:
+        print(w["workspace_id"])
+        break
+' "$ROOT" "$LABEL"
+}
+
+run_in() {
+  # PTY input is buffered while the pane's interactive shell initializes.
+  herdr pane run "$1" "$2" >/dev/null
+}
+
+split_from() {
+  local pane=$1 direction=$2
+  herdr pane split --pane "$pane" --direction "$direction" --cwd "$ROOT" --no-focus | jget result pane pane_id
+}
+
+# First hit wins. Ordered hand-written entry point, then language conventions.
+detect_server() {
+  local root=$1 target justfile
+
+  [[ -x $root/bin/dev ]] && { print 'bin/dev'; return }
+
+  for justfile in $root/justfile $root/Justfile; do
+    [[ -f $justfile ]] || continue
+    for target in dev server start; do
+      grep -qE "^${target}( [^:]*)?:" "$justfile" && { print "just $target"; return }
+    done
+  done
+
+  if [[ -f $root/Makefile ]]; then
+    for target in dev server run; do
+      grep -qE "^${target}:" "$root/Makefile" && { print "make $target"; return }
+    done
+  fi
+
+  if [[ -f $root/package.json ]]; then
+    local script pm="npm run"
+    script=$(python3 -c '
+import json, sys
+try:
+    scripts = json.load(open(sys.argv[1])).get("scripts", {})
+except Exception:
+    scripts = {}
+print(next((n for n in ("dev", "start", "serve") if n in scripts), ""))
+' "$root/package.json")
+    if [[ -n $script ]]; then
+      [[ -f $root/yarn.lock ]] && pm="yarn"
+      [[ -f $root/pnpm-lock.yaml ]] && pm="pnpm"
+      [[ -f $root/bun.lock || -f $root/bun.lockb ]] && pm="bun run"
+      print "$pm $script"
+      return
+    fi
+  fi
+
+  if [[ -f $root/mix.exs ]]; then
+    grep -q ':phoenix' "$root/mix.exs" && { print 'mix phx.server'; return }
+    print 'iex -S mix'
+    return
+  fi
+
+  [[ -f $root/manage.py ]] && { print 'python manage.py runserver'; return }
+
+  if [[ -d $root/content ]]; then
+    for target in hugo.toml hugo.yaml config.toml config.yaml; do
+      [[ -f $root/$target ]] && { print 'hugo server -D'; return }
+    done
+  fi
+
+  if [[ -f $root/go.mod ]]; then
+    [[ -f $root/main.go ]] && { print 'go run .'; return }
+    local mains=($root/cmd/*/main.go(N))
+    (( $#mains == 1 )) && { print "go run ./cmd/${${mains[1]:h}:t}"; return }
+  fi
+
+  print ''
+}
+
+WORKSPACE=$(existing_workspace)
+if [[ -n $WORKSPACE ]]; then
+  (( FOCUS )) && herdr workspace focus "$WORKSPACE" >/dev/null
+  print "herdr-sessionizer: $LABEL already open at $WORKSPACE"
+  exit 0
+fi
+
+(( SERVER_SET )) || SERVER=$(detect_server "$ROOT")
+
+# Build unfocused, with explicit cwds: stock splits follow the UI-focused pane.
+CREATED=$(herdr workspace create --cwd "$ROOT" --label "$LABEL" --no-focus)
+WORKSPACE=$(print -r -- "$CREATED" | jget result workspace workspace_id)
+EDIT_TAB=$(print -r -- "$CREATED" | jget result tab tab_id)
+EDIT_PANE=$(print -r -- "$CREATED" | jget result root_pane pane_id)
+
+herdr tab rename "$EDIT_TAB" edit >/dev/null
+run_in "$EDIT_PANE" nvim
+
+RUN=$(herdr tab create --workspace "$WORKSPACE" --cwd "$ROOT" --label run --no-focus)
+RUN_SHELL=$(print -r -- "$RUN" | jget result root_pane pane_id)
+RUN_SERVER=$(split_from "$RUN_SHELL" down)
+# Keep the run tab's active pane at a scratch prompt; the server takes the split.
+[[ -n $SERVER ]] && run_in "$RUN_SERVER" "$SERVER"
+
+AGENT_TAB_JSON=$(herdr tab create --workspace "$WORKSPACE" --cwd "$ROOT" --label agents --no-focus)
+AGENT_PANE=$(print -r -- "$AGENT_TAB_JSON" | jget result root_pane pane_id)
+# Split right, then stack down that column rather than making thin columns.
+if (( AGENTS >= 2 )); then
+  AGENT_PANE=$(split_from "$AGENT_PANE" right)
+  for (( i = 3; i <= AGENTS; i++ )); do
+    AGENT_PANE=$(split_from "$AGENT_PANE" down)
+  done
+fi
+
+if (( FOCUS )); then
+  herdr workspace focus "$WORKSPACE" >/dev/null
+  herdr tab focus "$EDIT_TAB" >/dev/null
+fi
+
+if [[ -n $SERVER ]]; then
+  print "herdr-sessionizer: $LABEL -> $WORKSPACE  server: $SERVER"
+elif (( SERVER_SET )); then
+  print "herdr-sessionizer: $LABEL -> $WORKSPACE  server: skipped"
+else
+  print "herdr-sessionizer: $LABEL -> $WORKSPACE  server: none detected"
+fi

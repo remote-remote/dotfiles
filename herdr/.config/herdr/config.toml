@@ -166,6 +166,14 @@ type = "plugin_action"
 command = "chmarax.herdr-nvim.pick-file"
 description = "open file from agent output"
 
+# Directory picker / workspace builder
+[[keys.command]]
+key = "prefix+f"
+type = "popup"
+command = "$HOME/.local/bin/herdr-sessionizer"
+width = "80%"
+height = "80%"
+
 # LazyGit
 [[keys.command]]
 key = "prefix+g"
