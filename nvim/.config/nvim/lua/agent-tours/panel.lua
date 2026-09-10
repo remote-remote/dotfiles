@@ -33,7 +33,7 @@ M.WINOPTS = {
   winbar = "",
 }
 
-local state = { bufnr = nil, rows = {} }
+local state = { bufnr = nil, rows = {}, index = nil }
 
 local function tour()
   return require("agent-tours")
@@ -51,6 +51,12 @@ local function keymaps(buf)
   local function under_cursor()
     return M.step_at(vim.api.nvim_win_get_cursor(0)[1])
   end
+  local function move(delta)
+    local i = under_cursor() or state.index
+    if i then tour().jump(i + delta * vim.v.count1) end
+  end
+  map(buf, "j", function() move(1) end, "Tour: preview next step")
+  map(buf, "k", function() move(-1) end, "Tour: preview previous step")
   map(buf, "<CR>", function()
     local i = under_cursor()
     if i then tour().select(i) end
@@ -99,7 +105,7 @@ function M.draw(win, spec, keep_cursor)
   local buf = M.buf()
   local width = vim.api.nvim_win_get_width(win)
   local built = format.panel(spec, width)
-  state.rows = built.rows
+  state.rows, state.index = built.rows, spec.index
 
   local saved
   if keep_cursor and vim.api.nvim_win_get_buf(win) == buf then
@@ -126,7 +132,7 @@ function M.draw(win, spec, keep_cursor)
 end
 
 function M.clear()
-  state.rows = {}
+  state.rows, state.index = {}, nil
   if state.bufnr and vim.api.nvim_buf_is_valid(state.bufnr) then
     vim.bo[state.bufnr].modifiable = true
     vim.api.nvim_buf_set_lines(state.bufnr, 0, -1, false, {})
