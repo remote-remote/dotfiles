@@ -4,14 +4,24 @@ Reference for framing and the investigation partner. These mechanics support the
 
 ## Workspace and working record
 
-Confirm `agent-scratch` is available before allocation. For a new investigation in a repository:
+Confirm `agent-scratch` is available before allocation. The repo-stable root collects every investigation into a repository, so list what is already there before starting another one:
 
 ```bash
 root="$(agent-scratch --repo)" || exit
+find "$root" -maxdepth 1 -type d -name 'investigate-*' | while read -r run; do
+	printf '\n%s\n' "$run"
+	grep -E '^- (state|working record):' "$run/run.md" 2>/dev/null ||
+		echo "  no run.md: interrupted framing"
+done
+```
+
+Report every run that is not `completed` or `cancelled`, and ask whether the user wants to resume one before allocating. A listed run is a reason to ask, never permission to resume or overwrite; a resume uses the exact directory the user confirms. Allocate only once the user wants a new investigation:
+
+```bash
 scratch="$(mktemp -d "$root/investigate-XXXXXXXX")" || exit
 ```
 
-Repo-stable scratch is shared across worktrees. For cross-repository investigations, choose an anchor repository and record every repository's absolute root separately. `agent-scratch` requires a Git repository in both modes. If no repository is established yet, ask the user to select an anchor or an explicit scratch location; retain that absolute path when repositories are identified. A resume uses the exact recorded investigation directory; matching names or an existing index are not permission to resume or overwrite.
+Repo-stable scratch is shared across worktrees. For cross-repository investigations, choose an anchor repository and record every repository's absolute root separately. `agent-scratch` requires a Git repository in both modes. If no repository is established yet, ask the user to select an anchor or an explicit scratch location; retain that absolute path when repositories are identified. Matching names, titles, or scope aliases establish nothing about which run is which.
 
 Keep these files in the unique directory:
 
@@ -20,7 +30,7 @@ Keep these files in the unique directory:
 - `index-<scope>.md`: investigation-owned oracle indices. Borrowed oracles retain their existing index paths.
 - `map.md`: working record only when using scratch output.
 
-Use `[a-z][a-z0-9_-]{0,31}` for local scope aliases used in filenames. For each oracle, record repository root, coverage and exclusions, entry points, absolute index path, claim namespace, execution method, ownership (`owned` or `borrowed`), verified agent identity and pane ID if applicable, and current request ID/status. Scope aliases are not globally unique agent identities or evidence namespaces.
+Use `[a-z][a-z0-9_-]{0,31}` for local scope aliases used in filenames. An alias is unique only within one investigation, which is why indices belong in the run directory and never in the repo-stable root beside it. For each oracle, record repository root, coverage and exclusions, entry points, absolute index path, claim namespace, execution method, ownership (`owned` or `borrowed`), verified agent identity and pane ID if applicable, and current request ID/status. Scope aliases are not globally unique agent identities or evidence namespaces.
 
 **Vault output is the default working record.** Explicit scratch-only (also called map-only) output uses `map.md` with the same logging discipline. This choice is where working memory lives, not the form of the eventual distilled artifact. Missing required tools are a blocker to resolve with the user, not permission to silently change output mode. Artifact paths are reported to the user so the investigation can be resumed.
 

@@ -1,3 +1,19 @@
+local function multi_move(dir)
+  if vim.env.HERDR_PANE_ID ~= nil then
+    if dir == "left" then
+      require('herdr-splits').move_cursor_left()
+    elseif dir == "right" then
+      require('herdr-splits').move_cursor_right()
+    end
+  elseif vim.g.tmux_version ~= nil then
+    if dir == "left" then
+      vim.cmd("TmuxNavigateLeft")
+    elseif dir == "right" then
+      vim.cmd("TmuxNavigateLeft")
+    end
+  end
+end
+
 return {
   "stevearc/oil.nvim",
   opts = {},
@@ -12,8 +28,18 @@ return {
         autosave_changes = true
       },
       keymaps = {
-        ["<C-h>"] = { callback = function() vim.cmd("TmuxNavigateLeft") end, desc = "Navigate left" },
-        ["<C-l>"] = { callback = function() vim.cmd("TmuxNavigateRight") end, desc = "Navigate right" },
+        ["<C-h>"] = {
+          callback = function()
+            multi_move("left")
+          end,
+          desc = "Navigate left"
+        },
+        ["<C-l>"] = {
+          callback = function()
+            multi_move("right")
+          end,
+          desc = "Navigate right"
+        },
         ["<C-\\>"] = { "actions.select_vsplit", desc = "Open in vertical split" },
         ["<C-_>"] = { "actions.select_split", desc = "Open in horizontal split" },
         ["<leader>ff"] = {
