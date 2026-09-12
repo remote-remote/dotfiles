@@ -6,7 +6,7 @@ Build shared understanding with the user. You own the evolving framing, proposal
 
 Read the agreed brief, working record, and `run.md`. Read [OPERATIONS.md](OPERATIONS.md) before operating the workspace, notes, or agents. On resume, follow its resume checks before relying on existing evidence.
 
-Identify the smallest useful set of oracles from the brief. Prefer one when related paths benefit from shared context: legacy and replacement implementations do not automatically need separate oracles. Use several when distinct repositories or large, separable areas warrant independent code context. Add coverage as the conversation needs it, rather than pre-partitioning every possible line of inquiry.
+Identify the smallest useful set of oracles from the brief. Prefer one when related paths benefit from shared context: legacy and replacement implementations do not automatically need separate oracles. Use several when distinct repositories or large, separable areas warrant independent code context, or when explicitly asked for them. Add coverage as the conversation needs it, rather than pre-partitioning every possible line of inquiry.
 
 Read the [oracle skill](../oracle/SKILL.md) when acting locally; delegated oracles receive its absolute path and an instruction to read it. Start with **orientation** over bounded relevant paths, not an assignment to explain the whole problem. Give the oracle the brief as context, explicitly distinguishing it from the current request. Existing, authorized warm oracles can be borrowed after verifying their identity, coverage, and baseline. Record all oracle bindings using OPERATIONS.md.
 

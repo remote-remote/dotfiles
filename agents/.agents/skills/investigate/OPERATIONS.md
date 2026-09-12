@@ -18,7 +18,7 @@ done
 Report every run that is not `completed` or `cancelled`, and ask whether the user wants to resume one before allocating. A listed run is a reason to ask, never permission to resume or overwrite; a resume uses the exact directory the user confirms. Allocate only once the user wants a new investigation:
 
 ```bash
-scratch="$(mktemp -d "$root/investigate-XXXXXXXX")" || exit
+scratch="$(mktemp -d "$root/investigate-<topic>")" || exit
 ```
 
 Repo-stable scratch is shared across worktrees. For cross-repository investigations, choose an anchor repository and record every repository's absolute root separately. `agent-scratch` requires a Git repository in both modes. If no repository is established yet, ask the user to select an anchor or an explicit scratch location; retain that absolute path when repositories are identified. Matching names, titles, or scope aliases establish nothing about which run is which.
