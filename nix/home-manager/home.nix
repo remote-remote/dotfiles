@@ -17,6 +17,7 @@
       fswatch
       fzf
       gawk
+      gopls
       jq
       lazygit
       lua
