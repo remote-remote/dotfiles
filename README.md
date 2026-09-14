@@ -29,10 +29,11 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `claude` → `~/.claude/` (`CLAUDE.md`, `settings.json`, `commands/`, `agents/`, `skills/`)
 - `pi` → `~/.pi/agent/` (`settings.json` + `AGENTS.md`)
 - `agents` → `~/.agents/skills/` (harness-agnostic skills, the [Agent Skills standard](https://agentskills.io) shared dir)
+- `workmux` → `~/.config/workmux/config.yaml` (only does anything on a tmux machine, see [workmux](#workmux))
 - `agent-instructions` is not stowed directly — it holds the one canonical
   `AGENTS.md` that the `claude` and `pi` packages both symlink to (see [agent setup](#agent-setup-pi--claude)).
 
-To re-stow everything: `cd ~/dotfiles && stow --restow aerospace tmux nvim bin nix herdr claude pi agents`.
+To re-stow everything: `cd ~/dotfiles && stow --restow aerospace tmux nvim bin nix herdr claude pi agents workmux`.
 
 ### herdr workspaces
 
@@ -85,6 +86,18 @@ script) get no guess and a plain prompt.
 
 `herdr-sessionizer` replaces `herdr-project`. After updating an existing install,
 `stow --restow bin` installs the new script and removes the old dangling symlink.
+
+### workmux
+
+[workmux](https://github.com/raine/workmux) pairs a git worktree with a tmux session per branch, which makes it the tmux counterpart to the herdr workspaces above — so it's installed only when the multiplexer is tmux. `nix/flake.nix` (`remote.multiplexer`) stays the single source of truth for that choice: home-manager reads it to decide what to install, and step 7b of `install.sh` reads the same line back out to decide whether to fetch the workmux binary. The config is stowed on every machine regardless; it's an inert yaml file without the binary.
+
+The binary lands in `~/.local/bin` (pinned via `WORKMUX_INSTALL_DIR`, since the upstream installer otherwise prefers `/usr/local/bin` and asks for sudo). After the first install it maintains itself with `workmux update`, so the install step only fires on a machine that has none.
+
+`~/.config/workmux/config.yaml` is a stow symlink into this repo, so `workmux config edit` edits the committed file directly and shows up in `git diff`. Per-project overrides go in a `.workmux.yaml` at the project root (`workmux init`) and belong to that project, not here.
+
+**Run `workmux setup --hooks`, never `workmux setup`.** The hooks half writes the agent status-tracking glue — a pi extension at `~/.pi/agent/extensions/workmux-status.ts` (machine-local, gitignored, owned and versioned by workmux exactly like the herdr integrations) and the `set-window-status` / `register-agent` hooks in `claude/.claude/settings.json`, which are committed and already present. The skills half copies workmux's own `/merge`, `/rebase`, `/worktree`, `/coordinator`, `/open-pr` and `/workmux` skills into the harnesses' skill dirs. Those six already live here, edited, as [vendored skills](#agent-setup-pi--claude) — so `--skills` damages both harnesses, differently. For pi it writes fresh copies into `~/.pi/agent/skills`, which pi loads *ahead* of `~/.agents/skills`: the edited copies are silently shadowed and pi lists them under `[Skill conflicts]`. For claude it writes to `~/.claude/skills`, which is a whole-directory symlink at `agents/.agents/skills` — so upstream's copies land on top of the edited ones **in this repo**, visible only as a surprise `git diff`. It can't run from `install.sh` anyway: it refuses a non-interactive terminal.
+
+`workmux-add` (in the `bin` package) is the popup bound to `prefix+G` in `tmux.conf`: it prompts for a name and runs `workmux add`.
 
 ### herdr plugins
 
@@ -198,9 +211,11 @@ future diff against upstream is still possible:
 | skills | upstream | copied at |
 | --- | --- | --- |
 | `brave-search`, `browser-tools`, `gccli`, `gdcli`, `gmcli`, `transcribe`, `youtube-transcript` | [badlogic/pi-skills](https://github.com/badlogic/pi-skills) | `90bb51c` (2026-06-06) |
+| `coordinator`, `merge`, `open-pr`, `rebase`, `workmux`, `worktree` | [raine/workmux](https://github.com/raine/workmux/tree/main/skills), via `workmux setup --skills` | `e2aa11d` (2026-09-14) |
 
 Those seven are the ones worth having here; upstream's `vscode` skill is skipped (this is
-a neovim setup). `brave-search` and `transcribe` want API keys; those belong in
+a neovim setup). The six workmux skills are the reason `workmux setup` must always be run
+as `workmux setup --hooks` — see [workmux](#workmux). `brave-search` and `transcribe` want API keys; those belong in
 `~/.config/zsh/local.zsh`, never the repo.
 
 A skill that ships helper scripts is a self-contained npm project: its `package.json` and

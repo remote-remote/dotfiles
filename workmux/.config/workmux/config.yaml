@@ -1,0 +1,22 @@
+nerdfont: true
+
+# Each worktree gets its own tmux session with the windows below.
+mode: session
+
+# Scope session names by repo, e.g. "buckets fix-auth".
+window_prefix: "{project} "
+
+windows:
+  - name: nvim
+    panes:
+      - command: nvim
+        focus: true
+
+  - name: term
+    panes:
+      - name: shell
+      - split: horizontal
+
+  - name: agents
+    panes:
+      - command: zsh

@@ -1,0 +1,12 @@
+#!/usr/bin/env zsh
+
+# Prompt for a worktree/branch name and hand it to `workmux add`.
+# Bound to `bind G display-popup -E -w 80% -h 80% "workmux-add"` in tmux.conf.
+
+set -euo pipefail
+
+echo "New Worktree"
+read "name?Name: "
+[[ -n $name ]] || { print -u2 "workmux-add: no name given"; exit 1; }
+
+exec workmux add "$name"

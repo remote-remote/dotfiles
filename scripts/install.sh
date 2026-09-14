@@ -7,10 +7,19 @@
 set -euo pipefail
 
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
-STOW_PACKAGES=(nix aerospace tmux nvim bin herdr claude pi agents)
+STOW_PACKAGES=(nix aerospace tmux nvim bin herdr claude pi agents workmux)
 
 log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
+
+# Which multiplexer this machine runs. nix/flake.nix is the source of truth —
+# home-manager reads it to decide whether to install tmux or write the kitty
+# panes config — so read it back here instead of keeping a second copy.
+read_multiplexer() {
+  local value
+  value="$(sed -n 's/^[[:space:]]*multiplexer = "\([^"]*\)".*/\1/p' "$DOTFILES/nix/flake.nix" | head -1)"
+  printf '%s' "${value:-tmux}"
+}
 
 # `herdr integration install claude` appends its SessionStart hook with an
 # absolute path and recognises an existing entry only by exact string match.
@@ -113,7 +122,7 @@ fi
 # writes runtime state there, so folding is safe (unlike ~/.pi/agent).
 mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.claude" \
   "$HOME/.config/herdr" "$HOME/.config/tmux" "$HOME/.config/aerospace" \
-  "$HOME/.config/nvim" "$HOME/.config/nix" \
+  "$HOME/.config/nvim" "$HOME/.config/nix" "$HOME/.config/workmux" \
   "$HOME/.pi/agent" "$HOME/.agents"
 
 for pkg in "${STOW_PACKAGES[@]}"; do
@@ -205,6 +214,20 @@ if ! have pi; then
   fi
 fi
 
+# 7b. workmux — git worktrees paired with tmux windows, so it's only worth
+#     installing on a tmux machine (the config in the `workmux` stow package is
+#     stowed either way; it's inert without the binary). The installer defaults
+#     to /usr/local/bin when that's writable, which would need sudo and would
+#     sit outside the PATH entry zsh.nix sets up, so pin ~/.local/bin. Thereafter
+#     `workmux update` self-updates the same binary, so this step only ever runs
+#     on a machine that has none.
+if [ "$(read_multiplexer)" = "tmux" ] && ! have workmux; then
+  log "Installing workmux"
+  curl -fsSL https://raw.githubusercontent.com/raine/workmux/main/scripts/install.sh |
+    WORKMUX_INSTALL_DIR="$HOME/.local/bin" bash ||
+    echo "workmux install failed; see https://github.com/raine/workmux" >&2
+fi
+
 # 8. tmux plugin manager + plugins.
 TPM_DIR="$HOME/.config/tmux/plugins/tpm"
 if [ ! -d "$TPM_DIR" ]; then
@@ -241,6 +264,12 @@ cat <<'EOF'
 
 Next steps:
   - Open a new shell (or `exec zsh`) to pick up the home-manager environment.
+  - On a tmux machine, run `workmux setup --hooks` once (it refuses a
+    non-interactive shell, so it can't run from here). Never `workmux setup`
+    bare or with --skills: that copies its own /merge, /rebase, /worktree,
+    /coordinator, /open-pr and /workmux skills into ~/.pi/agent/skills and
+    ~/.claude/skills, which shadows the edited copies this repo already owns
+    in agents/.agents/skills.
   - Optional: create ~/.config/zsh/local.zsh for machine-local secrets/aliases.
   - Optional: create ~/.local/bin/sessionizer.conf that exports SESSIONIZER_DIRS
     for tmux-sessionizer and herdr-sessionizer. Both read it through
