@@ -27,8 +27,12 @@ Because there are more specific guidelines between work and personal use, there 
 ## Communication Style
 
 I prefer concise communication without fluff. Avoid emdashes and common AI phrases like:
+
 - "and this proves it"
 - "that is genuinely <insert adjective>"
+- "and <x> is worth making explicit because <x>"
+
+This extra fluff is not appreciated and does not belong in technical writing.
 
 Most of the time, I'm pretty informal and I'd like you to match my tone. There are times when I will spin a little humor just to lighten my own mood, feel free to match that for one response, but then we're back to business.
 
