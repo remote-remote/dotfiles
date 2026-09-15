@@ -9,6 +9,19 @@
 #
 #   SESSIONIZER_DIRS=(~/code:1:2 ~/dotfiles)
 #
+# The conf is sourced, so an entry may be a glob -- zsh expands it before this
+# script sees it, and each match becomes its own bare entry. Globs that match
+# nothing vanish rather than erroring, so a conf may name a directory that
+# doesn't exist yet.
+#
+#   SESSIONIZER_DIRS=(~/code:1:2 ~/code/*/*__worktrees/*)
+#
+# SESSIONIZER_EXCLUDE drops paths matching any of its zsh patterns. Reaching
+# past a directory you don't want to offer takes both: the glob to pull the
+# children up, the exclude to drop the container the depth search found.
+#
+#   SESSIONIZER_EXCLUDE=('*__worktrees')
+#
 # A bare entry falls back to MIN_DEPTH / MAX_DEPTH when the conf sets them, so
 # confs predating per-entry depths keep their behavior. Default: immediate
 # directories in $HOME.
@@ -23,6 +36,12 @@ set -euo pipefail
 SELF=${0:t}
 
 SESSIONIZER_DIRS=("$HOME:1:1")
+SESSIONIZER_EXCLUDE=()
+
+# A conf glob names directories that may legitimately not exist yet, so an
+# empty match has to produce no entry instead of aborting the source.
+setopt null_glob
+
 CONFIG_FILE=${0:a:h}/sessionizer.conf
 [[ ! -f $CONFIG_FILE ]] || source "$CONFIG_FILE"
 
@@ -61,9 +80,27 @@ done
   exit 1
 }
 
+excluded() {
+  local pattern
+  for pattern in "${SESSIONIZER_EXCLUDE[@]}"; do
+    [[ $1 == ${~pattern} ]] && return 0
+  done
+  return 1
+}
+
 # Keep partial results from inaccessible descendants: a permission error under
 # one root must not empty the picker.
+#
+# Overlapping entries are normal once globs are in play -- a glob and a depth
+# search can reach the same directory -- so first hit wins and later ones are
+# dropped, preserving conf order.
+typeset -A seen
 for (( i = 1; i <= ${#SEARCH_ROOTS[@]}; i++ )); do
   find "${SEARCH_ROOTS[i]}" -mindepth "${SEARCH_MINS[i]}" -maxdepth "${SEARCH_MAXS[i]}" \
     -type d 2>/dev/null || true
+done | while IFS= read -r found; do
+  [[ -n $found ]] || continue
+  (( ${+seen[$found]} )) && continue
+  seen[$found]=1
+  excluded "$found" || print -r -- "$found"
 done

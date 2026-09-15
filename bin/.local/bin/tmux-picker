@@ -1,0 +1,164 @@
+#!/usr/bin/env zsh
+
+# Pick a tmux session -- live ones first, then the directories sessionizer-dirs
+# offers -- and switch to it, creating the session if it doesn't exist yet.
+#
+# Meant to be run inside `tmux display-popup -E`, where fzf fills the popup and
+# the popup supplies the border. Run from a plain shell it just draws inline.
+#
+# Live sessions shadow their directory: a dir whose session already exists is
+# only listed once, as the session.
+#
+#   ctrl-x  kill the highlighted session (never the one you're attached to)
+#
+# usage: tmux-picker
+
+set -euo pipefail
+
+SELF=${0:a}
+
+# Terminal palette indexes, so the picker follows whatever theme is loaded.
+C_RESET=$'\e[0m'
+C_DIM=$'\e[38;5;8m'
+C_ATTACHED=$'\e[1;38;5;2m'
+C_LIVE=$'\e[38;5;4m'
+C_DIR=$'\e[38;5;7m'
+C_META=$'\e[38;5;3m'
+
+tilde() { print -r -- "${1/#$HOME/~}" }
+
+session_name() { basename "$1" | tr . _ }
+
+# Rows are KIND \t NAME \t PATH \t DISPLAY; fzf shows column 4 and acts on 1-3.
+list_rows() {
+  local -A live_paths live_windows live_attached
+  local name dirpath windows attached
+  local -a order
+  if tmux has-session 2>/dev/null; then
+    while IFS=$'\t' read -r name dirpath windows attached; do
+      order+=("$name")
+      live_paths[$name]=$dirpath
+      live_windows[$name]=$windows
+      live_attached[$name]=$attached
+    done < <(tmux list-sessions -F $'#{session_name}\t#{session_path}\t#{session_windows}\t#{session_attached}' 2>/dev/null)
+  fi
+
+  local -a dirs
+  local dir
+  dirs=("${(@f)$("${SELF:h}/sessionizer-dirs")}")
+  for dir in "${dirs[@]}"; do
+    [[ -n $dir ]] || continue
+    name=$(session_name "$dir")
+    (( ${+live_paths[$name]} )) || order+=("$name:dir:$dir")
+  done
+
+  # One pass to size the name column, so both kinds line up.
+  local width=0 entry label
+  for entry in "${order[@]}"; do
+    label=${entry%%:dir:*}
+    (( ${#label} > width )) && width=${#label}
+  done
+  (( width > 28 )) && width=28
+
+  local icon color meta kind
+  for entry in "${order[@]}"; do
+    if [[ $entry == *:dir:* ]]; then
+      kind=d
+      name=${entry%%:dir:*}
+      dirpath=${entry#*:dir:}
+      icon=""
+      color=$C_DIR
+      meta="       "
+    else
+      kind=s
+      name=$entry
+      dirpath=${live_paths[$name]}
+      windows=${live_windows[$name]}
+      if [[ ${live_attached[$name]} != 0 ]]; then
+        icon="●"
+        color=$C_ATTACHED
+      else
+        icon="○"
+        color=$C_LIVE
+      fi
+      meta=$(printf '%s%2d win%s ' "$C_META" "$windows" "$C_DIM")
+    fi
+    printf '%s\t%s\t%s\t%s%s %-*s%s  %s%s%s\n' \
+      "$kind" "$name" "$dirpath" \
+      "$color" "$icon" "$width" "$name" "$C_RESET" \
+      "$meta" "$(tilde "$dirpath")" "$C_RESET"
+  done
+}
+
+preview() {
+  local kind=$1 name=$2 dirpath=$3
+  if [[ $kind == s && -n $name ]] && tmux has-session -t="$name" 2>/dev/null; then
+    print -r -- "${C_META}windows${C_RESET}"
+    tmux list-windows -t "$name" -F $'  #{?window_active,▌,│} #{window_index}  #{window_name}\t#{pane_current_command}' \
+      | expand -t 34
+    print
+    print -r -- "${C_META}$(tilde "$dirpath")${C_RESET}"
+    tmux capture-pane -ep -t "$name" 2>/dev/null | tail -n 40
+    return
+  fi
+
+  print -r -- "${C_META}$(tilde "$dirpath")${C_RESET}"
+  if git -C "$dirpath" rev-parse --git-dir >/dev/null 2>&1; then
+    print -r -- "  on ${C_LIVE}$(git -C "$dirpath" branch --show-current 2>/dev/null)${C_RESET}"
+    git -C "$dirpath" -c color.status=always status --short 2>/dev/null | head -n 15
+    print
+    git -C "$dirpath" -c color.ui=always log --oneline -n 10 2>/dev/null
+  else
+    ls -A "$dirpath" 2>/dev/null | head -n 30
+  fi
+}
+
+# Killing the session you're attached to takes the popup down with it.
+kill_session() {
+  local kind=$1 name=$2
+  [[ $kind == s && -n $name ]] || return 0
+  [[ $name != "$(tmux display-message -p '#S' 2>/dev/null)" ]] || return 0
+  tmux kill-session -t "$name" 2>/dev/null || true
+}
+
+case ${1-} in
+  --list) list_rows; exit 0 ;;
+  --preview) preview "${2-}" "${3-}" "${4-}"; exit 0 ;;
+  --kill) kill_session "${2-}" "${3-}"; exit 0 ;;
+esac
+
+selected=$(list_rows | fzf \
+  --ansi \
+  --delimiter=$'\t' \
+  --with-nth=4 \
+  --layout=reverse \
+  --margin=0,1 \
+  --border=none \
+  --info=inline-right \
+  --prompt='  ' \
+  --pointer='▌' \
+  --highlight-line \
+  --scrollbar='│' \
+  --header=$'ctrl-x  kill session\n' \
+  --color='fg:7,fg+:15,bg+:-1,hl:4,hl+:4,info:8,prompt:5,pointer:5,header:8,gutter:-1,border:8,query:15' \
+  --preview="$SELF --preview {1} {2} {3}" \
+  --preview-window='right,55%,border-left,wrap' \
+  --bind="ctrl-x:execute-silent($SELF --kill {1} {2})+reload($SELF --list)" \
+  --bind='ctrl-u:preview-up,ctrl-d:preview-down' \
+) || exit 0
+
+[[ -n $selected ]] || exit 0
+
+kind=${selected%%$'\t'*}
+rest=${selected#*$'\t'}
+name=${rest%%$'\t'*}
+rest=${rest#*$'\t'}
+dirpath=${rest%%$'\t'*}
+
+tmux has-session -t="$name" 2>/dev/null || tmux new-session -ds "$name" -c "$dirpath"
+
+if [[ -n ${TMUX-} ]]; then
+  tmux switch-client -t "$name"
+else
+  tmux attach-session -t "$name"
+fi
