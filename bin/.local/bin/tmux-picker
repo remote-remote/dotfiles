@@ -138,9 +138,10 @@ selected=$(list_rows | fzf \
   --prompt='  ' \
   --pointer='▌' \
   --highlight-line \
+  --track \
   --scrollbar='│' \
   --header=$'ctrl-x  kill session\n' \
-  --color='fg:7,fg+:15,bg+:-1,hl:4,hl+:4,info:8,prompt:5,pointer:5,header:8,gutter:-1,border:8,query:15' \
+  --color='fg:7,fg+:15,bg+:0,hl:4,hl+:4,info:8,prompt:5,pointer:5,header:8,gutter:-1,border:8,query:15' \
   --preview="$SELF --preview {1} {2} {3}" \
   --preview-window='right,55%,border-left,wrap' \
   --bind="ctrl-x:execute-silent($SELF --kill {1} {2})+reload($SELF --list)" \
