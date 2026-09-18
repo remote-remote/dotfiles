@@ -1,2 +1,5 @@
 .DS_Store
 .agent/
+
+# Claude Code downloads published skills into the stow-managed tree; cache, not source.
+agents/.agents/skills/synced/
