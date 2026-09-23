@@ -8,13 +8,4 @@ return {
     ---@type render.md.UserConfig
     opts = {},
   },
-  {
-    'Nedra1998/nvim-mdlink',
-    config = function()
-      require('nvim-mdlink').setup({
-        keymap = true,
-        cmp = true
-      })
-    end
-  }
 }

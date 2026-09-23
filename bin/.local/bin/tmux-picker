@@ -138,7 +138,6 @@ selected=$(list_rows | fzf \
   --prompt='  ' \
   --pointer='▌' \
   --highlight-line \
-  --track \
   --scrollbar='│' \
   --header=$'ctrl-x  kill session\n' \
   --color='fg:7,fg+:15,bg+:0,hl:4,hl+:4,info:8,prompt:4,pointer:4,header:8,gutter:-1,border:8,query:15' \

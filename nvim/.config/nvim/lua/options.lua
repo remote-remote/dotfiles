@@ -2,7 +2,7 @@ vim.o.tabstop = 2
 vim.o.shiftwidth = 2
 
 -- come back to the preview later
-vim.o.completeopt = "menu,noinsert,noselect"
+vim.o.completeopt = "menuone,noinsert,noselect"
 
 vim.keymap.set("i", "<CR>", function()
   if vim.fn.pumvisible() == 1 and vim.fn.complete_info({ "selected" }).selected ~= -1 then

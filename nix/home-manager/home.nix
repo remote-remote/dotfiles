@@ -27,8 +27,8 @@
       nerd-fonts.inconsolata
       nerd-fonts.iosevka
       nerd-fonts.jetbrains-mono
-      nerd-fonts.monoid
       nerd-fonts.monaspace
+      nerd-fonts.monoid
       nerd-fonts.proggy-clean-tt
       nerd-fonts.zed-mono
       nmap
@@ -36,6 +36,7 @@
       redis
       ripgrep
       sc-im
+      sqlc
       stow
       tree-sitter
       typescript-language-server
