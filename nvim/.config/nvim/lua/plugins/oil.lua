@@ -1,19 +1,3 @@
-local function multi_move(dir)
-  if vim.env.HERDR_PANE_ID ~= nil then
-    if dir == "left" then
-      require('herdr-splits').move_cursor_left()
-    elseif dir == "right" then
-      require('herdr-splits').move_cursor_right()
-    end
-  elseif vim.g.tmux_version ~= nil then
-    if dir == "left" then
-      vim.cmd("TmuxNavigateLeft")
-    elseif dir == "right" then
-      vim.cmd("TmuxNavigateLeft")
-    end
-  end
-end
-
 return {
   "stevearc/oil.nvim",
   opts = {},
@@ -30,13 +14,13 @@ return {
       keymaps = {
         ["<C-h>"] = {
           callback = function()
-            multi_move("left")
+            require("navigate").move("left")
           end,
           desc = "Navigate left"
         },
         ["<C-l>"] = {
           callback = function()
-            multi_move("right")
+            require("navigate").move("right")
           end,
           desc = "Navigate right"
         },

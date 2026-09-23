@@ -110,28 +110,26 @@ key = "prefix+minus"
 type = "shell"
 command = "$HOME/.local/bin/herdr-split down"
 
-# Pane Focus
-# default (no nvim navigator)
-# Nvim navigator
+# Pane focus: nvim splits -> herdr panes -> AeroSpace windows (see bin/.local/bin/herdr-nav)
 [[keys.command]]
 key = "ctrl+h"
-type = "plugin_action"
-command = "herdr-splits.nav-left"
+type = "shell"
+command = "$HOME/.local/bin/herdr-nav left"
 
 [[keys.command]]
 key = "ctrl+j"
-type = "plugin_action"
-command = "herdr-splits.nav-down"
+type = "shell"
+command = "$HOME/.local/bin/herdr-nav down"
 
 [[keys.command]]
 key = "ctrl+k"
-type = "plugin_action"
-command = "herdr-splits.nav-up"
+type = "shell"
+command = "$HOME/.local/bin/herdr-nav up"
 
 [[keys.command]]
 key = "ctrl+l"
-type = "plugin_action"
-command = "herdr-splits.nav-right"
+type = "shell"
+command = "$HOME/.local/bin/herdr-nav right"
 
 [[keys.command]]
 key = "alt+h"

@@ -40,6 +40,9 @@ default-root-container-orientation = 'auto'
 # Fallback value (if you omit the key): on-focused-monitor-changed = []
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
+# Terminal mode follows kitty focus. An empty workspace (no focused window) keeps the current mode.
+on-focus-changed = ['''exec-and-forget case "$(/opt/homebrew/bin/aerospace list-windows --focused --format '%{app-bundle-id}')" in net.kovidgoyal.kitty) /opt/homebrew/bin/aerospace mode terminal ;; '') ;; *) /opt/homebrew/bin/aerospace mode main ;; esac''']
+
 # You can effectively turn off macOS "Hide application" (cmd-h) feature by toggling this flag
 # Useful if you don't use this macOS feature, but accidentally hit cmd-h or cmd-alt-h key
 # Also see: https://nikitabobko.github.io/AeroSpace/goodies#disable-hide-app

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# ctrl-hjkl for herdr panes. Replaces herdr-splits' nav actions so the outer
+# pane edge hands off to AeroSpace instead of wrapping.
+#
+# - nvim pane: forward the chord; herdr-splits.nvim moves splits/panes and calls
+#   its at_edge handler (AeroSpace) when both are exhausted.
+# - other panes: unzoom, then focus the neighbour, or AeroSpace at the edge.
+#   A zoomed pane reports every edge, so unzoom has to happen first.
+#
+# usage: herdr-nav <left|down|up|right>
+
+set -euo pipefail
+
+dir=${1:?usage: herdr-nav <left|down|up|right>}
+herdr=${HERDR_BIN_PATH:-herdr}
+
+case $dir in
+  left) key=ctrl+h ;;
+  down) key=ctrl+j ;;
+  up) key=ctrl+k ;;
+  right) key=ctrl+l ;;
+  *) echo "herdr-nav: unknown direction: $dir" >&2; exit 2 ;;
+esac
+
+if "$herdr" pane process-info --current 2>/dev/null |
+  grep -qiE '"name"[[:space:]]*:[[:space:]]*"g?(view|l?n?vim?x?)(diff)?"'; then
+  pane=${HERDR_ACTIVE_PANE_ID:-$("$herdr" pane current --current | grep -o '"pane_id"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')}
+  exec "$herdr" pane send-keys "$pane" "$key"
+fi
+
+edges=$("$herdr" pane edges --current)
+if grep -q '"zoomed"[[:space:]]*:[[:space:]]*true' <<<"$edges"; then
+  "$herdr" pane zoom --off --current
+  edges=$("$herdr" pane edges --current)
+fi
+
+if grep -q "\"$dir\"[[:space:]]*:[[:space:]]*true" <<<"$edges"; then
+  exec aerospace focus "$dir"
+fi
+exec "$herdr" pane focus --direction "$dir" --current
