@@ -50,6 +50,9 @@
       done
       unset _nvm
 
+      # npm globals that must survive `nvm use` (see step 6 of scripts/install.sh).
+      export PATH="$HOME/.local/share/npm-global/bin:$PATH"
+
       export PATH=~/.opencode/bin:$PATH
 
       export BUN_INSTALL="$HOME/.bun"

@@ -162,6 +162,12 @@ if command -v nvm >/dev/null 2>&1; then
   nvm install 22
   nvm alias default 22
   npm install -g corepack
+  # gh-axi, chrome-devtools-axi, and lavish-axi each add their own SessionStart
+  # hook to ~/.claude/settings.json on every run unless one is already there.
+  # Those hooks are committed, so these installs leave the repo clean. They go
+  # in a prefix outside nvm so they stay on PATH when a repo switches node
+  # versions; zsh.nix puts its bin on PATH.
+  npm install -g --prefix "$HOME/.local/share/npm-global" gh-axi chrome-devtools-axi lavish-axi tasks-axi quota-axi
 else
   echo "nvm not loaded; skipping node setup" >&2
 fi
