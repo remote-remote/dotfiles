@@ -45,6 +45,7 @@
   "undotree": { "branch": "master", "commit": "6fa6b57cda8459e1e4b2ca34df702f55242f4e4d" },
   "vague.nvim": { "branch": "main", "commit": "f9060fdaf7b20f68575d6f8214da6f1cf0c72825" },
   "vim-tmux-navigator": { "branch": "master", "commit": "e41c431a0c7b7388ae7ba341f01a0d217eb3a432" },
+  "virgil.nvim": { "branch": "main", "commit": "a2848753f7b704888d846e518c5aa110b104a7d4" },
   "vscode-js-debug": { "branch": "main", "commit": "0b5e0dade997b3c702a98e1f58989afcb30612d6" },
   "which-key.nvim": { "branch": "main", "commit": "3aab2147e74890957785941f0c1ad87d0a44c15a" },
   "zen-mode.nvim": { "branch": "main", "commit": "8564ce6d29ec7554eb9df578efa882d33b3c23a7" }
