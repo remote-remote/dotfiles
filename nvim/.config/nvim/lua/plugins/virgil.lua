@@ -1,6 +1,9 @@
 return {
   "remote-remote/virgil.nvim",
-  cmd = { "Virgil", "VirgilQuit", "VirgilNext", "VirgilPrev", "VirgilSteps", "VirgilQuickfix" },
+  cmd = { "Virgil", "VirgilQuit", "VirgilNext", "VirgilPrev", "VirgilSteps", "VirgilQuickfix", "VirgilInstall" },
+  build = function()
+    require("virgil").install({ skills_dirs = { "~/.agents/skills", "~/.claude/skills" }, bin_dir = "~/.local/bin" })
+  end,
   opts = {},
   -- <leader>t is neotest's prefix, so the trail lives under <leader>T.
   keys = {
