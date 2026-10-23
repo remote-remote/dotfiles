@@ -4,7 +4,7 @@
 #
 #   agent-skills            lint + wiring (fast, free, deterministic)
 #   agent-skills lint       validate every SKILL.md against the Agent Skills spec
-#   agent-skills wiring     check the stow symlinks all resolve to one source
+#   agent-skills wiring     check the stow symlinks resolve to the repo sources
 #   agent-skills probe NAME load skill NAME in each harness and report hit/miss
 #   agent-skills all NAME   lint + wiring, then probe NAME
 #
@@ -14,6 +14,7 @@ set -uo pipefail
 
 SKILLS_DIR="${AGENT_SKILLS_DIR:-$HOME/.agents/skills}"
 CANON_INSTRUCTIONS="agent-instructions/AGENTS.md"   # basename we expect at the end of both chains
+CANON_SKILLS="${DOTFILES:-$HOME/dotfiles}/agents/.agents/skills"
 
 green() { printf '\033[32m%s\033[0m' "$1"; }
 red()   { printf '\033[31m%s\033[0m' "$1"; }
@@ -91,20 +92,52 @@ resolves_to() { # label  path  expected-basename-tail
   esac
 }
 
+# A harness skills dir must be a real directory holding one link per repo
+# skill. If it were a link into the repo, skills created on this machine would
+# land in the repo.
+check_skills_dir() { # label  dir
+  local label="$1" dir="$2" skill name entry linked=0 local_skills=""
+  if [ -L "$dir" ]; then
+    fail "$label $dir is a symlink to $(readlink -f "$dir"); new skills would land in the repo (re-run install.sh step 4)"
+    return
+  fi
+  if [ ! -d "$dir" ]; then fail "$label skills dir missing: $dir"; return; fi
+
+  for skill in "$CANON_SKILLS"/*/; do
+    name="$(basename "$skill")"
+    entry="$dir/$name"
+    if [ -L "$entry" ] && [ "$(readlink -f "$entry")" = "$(readlink -f "$skill")" ]; then
+      linked=$((linked + 1))
+    elif [ -L "$entry" ]; then
+      fail "$label $name -> $(readlink -f "$entry") (expected $(readlink -f "$skill"))"
+    elif [ -e "$entry" ]; then
+      fail "$label $name is a local copy that shadows the repo skill"
+    else
+      fail "$label $name not linked (stow --restow agents claude)"
+    fi
+  done
+  pass "$label $linked repo skills linked in $dir"
+
+  for entry in "$dir"/*; do
+    [ -e "$entry" ] || [ -L "$entry" ] || continue   # unmatched glob
+    name="$(basename "$entry")"
+    if [ -L "$entry" ] && [ ! -e "$entry" ]; then
+      fail "$label $name is a dangling link (stow --restow agents claude)"
+    elif [ ! -d "$CANON_SKILLS/$name" ]; then
+      local_skills="$local_skills $name"
+    fi
+  done
+  [ -n "$local_skills" ] && pass "$label machine-local:$local_skills"
+  return 0
+}
+
 cmd_wiring() {
-  head_ "wiring — stow symlinks resolve to a single source"
+  head_ "wiring — stow symlinks resolve to the repo sources"
   # instructions: both harness paths end at the one AGENTS.md
   resolves_to "claude CLAUDE.md " "$HOME/.claude/CLAUDE.md"   "$CANON_INSTRUCTIONS"
   resolves_to "pi     AGENTS.md " "$HOME/.pi/agent/AGENTS.md" "$CANON_INSTRUCTIONS"
-  # skills: both harness dirs must resolve to the *same* canonical directory
-  local pi_sk cl_sk
-  pi_sk="$(readlink -f "$HOME/.agents/skills" 2>/dev/null)"
-  cl_sk="$(readlink -f "$HOME/.claude/skills" 2>/dev/null)"
-  if [ -n "$pi_sk" ] && [ "$pi_sk" = "$cl_sk" ]; then
-    pass "pi & claude skills both -> $pi_sk"
-  else
-    fail "skills dirs diverge: pi='$pi_sk' claude='$cl_sk'"
-  fi
+  check_skills_dir "pi    " "$HOME/.agents/skills"
+  check_skills_dir "claude" "$HOME/.claude/skills"
   # the folding trap: ~/.pi/agent must stay a real dir, not a symlink into the repo
   if [ -L "$HOME/.pi/agent" ]; then
     fail "~/.pi/agent is a SYMLINK — stow folded it; pi will write session/auth state into the repo"

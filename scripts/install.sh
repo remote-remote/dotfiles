@@ -116,14 +116,21 @@ fi
 # would then write sessions/auth/caches straight through it. Creating the real
 # dirs first forces stow to link individual files and leave the rest alone.
 #
-# ~/.agents is deliberately NOT pre-created past its parent: we *want* stow to
-# fold ~/.agents/skills into one whole-dir symlink at the canonical repo dir, so
-# a newly added skill shows up for pi and claude alike with no re-stow. Nothing
-# writes runtime state there, so folding is safe (unlike ~/.pi/agent).
+# The skills dirs get the same treatment so a skill created on this machine
+# stays machine-local instead of landing in the repo. Stow links each repo
+# skill individually, so a skill added to the repo needs a re-stow to appear.
+# Earlier installs folded these into whole-dir links into the repo; mkdir -p
+# would follow such a link, so remove it first.
+for skills_dir in "$HOME/.agents/skills" "$HOME/.claude/skills"; do
+  if [ -L "$skills_dir" ] && [[ "$(readlink -f "$skills_dir")" == "$(readlink -f "$DOTFILES")"/* ]]; then
+    rm "$skills_dir"
+  fi
+done
+
 mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.claude" \
   "$HOME/.config/herdr" "$HOME/.config/tmux" "$HOME/.config/aerospace" \
   "$HOME/.config/nvim" "$HOME/.config/nix" "$HOME/.config/workmux" \
-  "$HOME/.pi/agent" "$HOME/.agents"
+  "$HOME/.pi/agent" "$HOME/.agents/skills" "$HOME/.claude/skills"
 
 for pkg in "${STOW_PACKAGES[@]}"; do
   log "Stowing $pkg"
@@ -159,8 +166,7 @@ done
 
 if command -v nvm >/dev/null 2>&1; then
   log "Installing node + global npm packages"
-  nvm install 22
-  nvm alias default 22
+  nvm install 24.22.1
   npm install -g corepack
   # gh-axi, chrome-devtools-axi, and lavish-axi each add their own SessionStart
   # hook to ~/.claude/settings.json on every run unless one is already there.

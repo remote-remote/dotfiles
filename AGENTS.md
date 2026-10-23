@@ -29,13 +29,13 @@ Stow packages mirror paths under `$HOME`. Editing an installed symlink edits the
 | `pi` | `~/.pi/agent/settings.json` and `~/.pi/agent/AGENTS.md` |
 | `agents` | `~/.agents/skills/` |
 
-New files may need `stow --restow <pkg>` from `~/dotfiles` to appear in `$HOME`. Files added inside an already symlinked directory, such as the shared skills directory, appear immediately. Check the existing links before restowing.
+New files may need `stow --restow <pkg>` from `~/dotfiles` to appear in `$HOME`. Files added inside an already symlinked directory appear immediately. A new skill directory needs `stow --restow agents claude`, because each skill is linked individually. Check the existing links before restowing.
 
 ## Shared agent instructions and skills
 
 `agent-instructions/AGENTS.md` is the canonical global instructions file. Both `~/.claude/CLAUDE.md` and `~/.pi/agent/AGENTS.md` resolve to it through their Stow packages. Keep it harness-neutral. This root `AGENTS.md` contains repo-specific guidance, not global instructions.
 
-Shared skills live in `agents/.agents/skills/`, exposed through `~/.agents/skills` and `~/.claude/skills`. Harness settings remain separate. See the README's [agent setup section](README.md#agent-setup-pi--claude) for the wiring and checks.
+Shared skills live in `agents/.agents/skills/`, linked one per skill into `~/.agents/skills` and `~/.claude/skills`. Other directories in those two paths are machine-local skills and do not belong in the repo. Harness settings remain separate. See the README's [agent setup section](README.md#agent-setup-pi--claude) for the wiring and checks.
 
 ## Secrets
 

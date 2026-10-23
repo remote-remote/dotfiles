@@ -95,7 +95,7 @@ The binary lands in `~/.local/bin` (pinned via `WORKMUX_INSTALL_DIR`, since the 
 
 `~/.config/workmux/config.yaml` is a stow symlink into this repo, so `workmux config edit` edits the committed file directly and shows up in `git diff`. Per-project overrides go in a `.workmux.yaml` at the project root (`workmux init`) and belong to that project, not here.
 
-**Run `workmux setup --hooks`, never `workmux setup`.** The hooks half writes the agent status-tracking glue — a pi extension at `~/.pi/agent/extensions/workmux-status.ts` (machine-local, gitignored, owned and versioned by workmux exactly like the herdr integrations) and the `set-window-status` / `register-agent` hooks in `claude/.claude/settings.json`, which are committed and already present. The skills half copies workmux's own `/merge`, `/rebase`, `/worktree`, `/coordinator`, `/open-pr` and `/workmux` skills into the harnesses' skill dirs. Those six already live here, edited, as [vendored skills](#agent-setup-pi--claude) — so `--skills` damages both harnesses, differently. For pi it writes fresh copies into `~/.pi/agent/skills`, which pi loads *ahead* of `~/.agents/skills`: the edited copies are silently shadowed and pi lists them under `[Skill conflicts]`. For claude it writes to `~/.claude/skills`, which is a whole-directory symlink at `agents/.agents/skills` — so upstream's copies land on top of the edited ones **in this repo**, visible only as a surprise `git diff`. It can't run from `install.sh` anyway: it refuses a non-interactive terminal.
+**Run `workmux setup --hooks`, never `workmux setup`.** The hooks half writes the agent status-tracking glue — a pi extension at `~/.pi/agent/extensions/workmux-status.ts` (machine-local, gitignored, owned and versioned by workmux exactly like the herdr integrations) and the `set-window-status` / `register-agent` hooks in `claude/.claude/settings.json`, which are committed and already present. The skills half copies workmux's own `/merge`, `/rebase`, `/worktree`, `/coordinator`, `/open-pr` and `/workmux` skills into the harnesses' skill dirs. Those six already live here, edited, as [vendored skills](#agent-setup-pi--claude) — so `--skills` damages both harnesses, differently. For pi it writes fresh copies into `~/.pi/agent/skills`, which pi loads *ahead* of `~/.agents/skills`: the edited copies are silently shadowed and pi lists them under `[Skill conflicts]`. For claude it writes to `~/.claude/skills`, where each of those six names is a stow link into `agents/.agents/skills`, so upstream's copies are written through the links on top of the edited ones **in this repo**, visible only as a surprise `git diff`. It can't run from `install.sh` anyway: it refuses a non-interactive terminal.
 
 `workmux-add` (in the `bin` package) is the popup bound to `prefix+G` in `tmux.conf`: it prompts for a name and runs `workmux add`.
 
@@ -128,7 +128,7 @@ worth carrying between machines, and leaves the rest machine-local:
 | `~/.claude/settings.json` | model, effort level, permissions, hooks, enabled plugins |
 | `~/.claude/commands/` | slash commands (`foo.md` → `/foo`) |
 | `~/.claude/agents/` | subagent definitions (`foo.md` → the `foo` agent type) |
-| `~/.claude/skills/` | symlink → the shared `agents/.agents/skills/` dir, so pi and claude read the same `foo/SKILL.md` skills |
+| `~/.claude/skills/` | real dir holding one link per skill in the shared `agents/.agents/skills/` dir, so pi and claude read the same `foo/SKILL.md` skills |
 
 Two things to know:
 
@@ -173,15 +173,14 @@ the canonical file `AGENTS.md` is the vendor-neutral choice. Edit either end and
 `git diff` shows the change in `agent-instructions/AGENTS.md`; neither harness
 *writes* its instructions file, so nothing clobbers the symlinks.
 
-**Skills — one directory.** The canonical skills live in `agents/.agents/skills/`
-(each skill a `<name>/SKILL.md` folder). pi reads `~/.agents/skills/` natively; the
-`claude` package symlinks its whole `skills/` dir at the same canonical dir, so both
-harnesses see the same folders with no per-skill `find-skills` bridge:
+**Skills — one directory.** The canonical skills live in `agents/.agents/skills/` (each skill a `<name>/SKILL.md` folder). pi reads `~/.agents/skills/` natively. The `claude` package's `skills/` is a symlink to the same canonical dir. Both harness dirs are real directories that `install.sh` creates before stowing, so stow fills each with one link per skill:
 
 ```
-~/.agents/skills      → agents/.agents/skills               (pi, native)
-~/.claude/skills      → claude/.claude/skills → agents/.agents/skills   (claude)
+~/.agents/skills/foo  → agents/.agents/skills/foo                          (pi, native)
+~/.claude/skills/foo  → claude/.claude/skills/foo → agents/.agents/skills/foo   (claude)
 ```
+
+A skill that a harness creates on this machine is written as a real directory beside those links, so it stays machine-local and never reaches the repo. To share it, move it into `agents/.agents/skills/` and re-stow.
 
 **Settings stay separate.** The harness settings schemas differ
 (`~/.claude/settings.json` uses `permissions`/`enabledPlugins`; `~/.pi/agent/settings.json`
@@ -195,13 +194,7 @@ herdr's `extensions/`, `models-store.json`) out of the repo, the same discipline
 add `pi`. Instructions and skills are identical everywhere; only which harness
 packages you stow differs.
 
-**Adding a skill.** Drop a `<name>/SKILL.md` folder in `agents/.agents/skills/`. Because
-`~/.agents/skills` and `~/.claude/skills` are both whole-directory symlinks to that
-dir, the skill is live in both harnesses immediately — no re-stow. (pi will even
-scaffold new skills straight into the repo path when asked.) `agents/.agents/skills`
-is the one folder in the repo intentionally left foldable by stow; `install.sh`
-pre-creates every *other* harness dir but only `mkdir -p ~/.agents` so stow folds
-`skills` into a single link.
+**Adding a skill.** Drop a `<name>/SKILL.md` folder in `agents/.agents/skills/`, then run `stow --restow agents claude` to link it into both harness dirs. Restowing also removes the links for skills deleted from the repo. `agent-skills wiring` reports any repo skill that is not linked yet.
 
 **Vendored skills.** Some skills came from elsewhere and were copied in, not linked or
 submoduled: they're short enough to read, and the point is to edit them for my own use.
@@ -242,30 +235,14 @@ authoring a skill or after a re-stow:
 agent-skills            # lint + wiring: fast, free, deterministic. run this constantly.
 agent-skills lint       # validate every SKILL.md (name rules, description present/length,
                         #   and whether name matches its dir — which Claude's spec requires)
-agent-skills wiring      # every stow symlink resolves to one source; ~/.pi/agent not folded
+agent-skills wiring      # stow symlinks resolve to the repo; skills dirs and ~/.pi/agent not folded
 agent-skills probe NAME  # launch pi AND claude, load /skill:NAME, report hit/miss (costs API calls)
 agent-skills all NAME    # lint + wiring, then probe NAME
 ```
 
-The layers map to the failure modes: **lint** catches authoring mistakes without a
-harness (it reimplements the Agent Skills frontmatter rules, so a malformed skill
-fails here in milliseconds instead of silently not loading later). **wiring** catches
-a broken or folded symlink after a re-stow — including the folding trap, by asserting
-`~/.pi/agent` is still a real directory. **probe** is the only layer that spends tokens:
-it invokes each harness's slash command (`/skill:NAME` in pi, `/NAME` in claude) and
-checks the harness found the skill rather than answering "not available" / "unknown
-command". `lint` and `wiring` exit non-zero on failure, so `agent-skills` drops into a
-commit hook or CI step cleanly.
+The layers map to the failure modes: **lint** catches authoring mistakes without a harness (it reimplements the Agent Skills frontmatter rules, so a malformed skill fails here in milliseconds instead of silently not loading later). **wiring** catches a broken or folded symlink after a re-stow, including the folding trap, by asserting that `~/.pi/agent`, `~/.agents/skills` and `~/.claude/skills` are real directories. For each skills dir it also reports repo skills that are unlinked or shadowed by a local copy, dangling links left by a deleted skill, and the machine-local skills it found. **probe** is the only layer that spends tokens: it invokes each harness's slash command (`/skill:NAME` in pi, `/NAME` in claude) and checks the harness found the skill rather than answering "not available" / "unknown command". `lint` and `wiring` exit non-zero on failure, so `agent-skills` drops into a commit hook or CI step cleanly.
 
-**The folding trap — why `install.sh` runs `mkdir -p` first.** stow *folds* a
-directory into a single symlink when the target doesn't exist: an absent
-`~/.pi/agent` becomes one link `~/.pi/agent → pi/.pi/agent` *into this repo*, and pi
-then writes `sessions/`, `auth.json`, and caches straight through it, dumping
-runtime state into your dotfiles. So `install.sh` pre-creates the real live dirs
-(`~/.pi/agent`, `~/.claude`, `~/.agents/skills`) *before* stowing, which forces
-stow to link individual files and leave the rest of each working directory alone.
-This matters most on a fresh machine where the harness hasn't run yet — on a
-machine where it already has, the dir exists and folding never triggers.
+**The folding trap — why `install.sh` runs `mkdir -p` first.** stow *folds* a directory into a single symlink when the target doesn't exist: an absent `~/.pi/agent` becomes one link `~/.pi/agent → pi/.pi/agent` *into this repo*, and pi then writes `sessions/`, `auth.json`, and caches straight through it, dumping runtime state into your dotfiles. So `install.sh` pre-creates the real live dirs (`~/.pi/agent`, `~/.claude`, `~/.agents/skills`, `~/.claude/skills`) *before* stowing, which forces stow to link individual files and leave the rest of each working directory alone. This matters most on a fresh machine where the harness hasn't run yet — on a machine where it already has, the dir exists and folding never triggers. Earlier installs folded the two skills dirs on purpose, so `install.sh` first removes either one if it is a symlink into this repo.
 
 ### Nix Managed
 Declared in `nix/flake.nix` + `nix/home-manager/*.nix`. Home-manager writes these paths from the nix store:
