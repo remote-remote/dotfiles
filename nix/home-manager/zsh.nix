@@ -28,6 +28,16 @@
       lg = "lazygit";
     };
     initContent = ''
+      # path_helper in /etc/zprofile moves the macOS system dirs ahead of the Nix
+      # profiles. Put the profiles back just before the first system dir, so Nix
+      # packages beat macOS's copies but not the user dirs earlier in PATH.
+      () {
+        local -a nix_bins=("$HOME/.nix-profile/bin" /nix/var/nix/profiles/default/bin)
+        path=(''${path:|nix_bins})
+        local i=''${path[(i)/usr/local/bin]}
+        path=(''${path[1,i-1]} $nix_bins ''${path[i,-1]})
+      }
+
       autoload -U +X bashcompinit && bashcompinit
       fpath=($fpath "$HOME/.zfunctions")
       if [[ -f ~/.config/zsh/local.zsh ]]; then

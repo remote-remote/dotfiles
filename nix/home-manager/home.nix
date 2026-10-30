@@ -33,6 +33,7 @@
       nerd-fonts.zed-mono
       nmap
       postgresql
+      python313
       redis
       ripgrep
       sc-im
