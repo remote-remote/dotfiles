@@ -14,6 +14,7 @@
       direnv
       docker
       docker-credential-helpers
+      espeak-ng
       fswatch
       fzf
       gawk
@@ -41,6 +42,7 @@
       stow
       tree-sitter
       typescript-language-server
+      uv
       yazi
       zoxide
     ];
