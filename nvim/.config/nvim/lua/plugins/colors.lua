@@ -4,8 +4,9 @@ return {
   {
     "vague-theme/vague.nvim",
     opts = {
+      transparent = true,
       colors = {
-        bg = "#000000",
+        bg = "#111111",
       },
       on_highlights = function(highlights, colors)
         -- vague.nvim removed its utilities module; blend two hex colors ourselves
