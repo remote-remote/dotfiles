@@ -26,7 +26,7 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `bin` → `~/.local/bin/` (scripts: `ghpr`, `csvify`, `tmux-sessionizer`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-sessionizer`, `sessionizer-dirs`, `agent-skills`)
 - `nix` → `~/.config/nix/nix.conf` (enables `nix-command` + `flakes`; stowed first so home-manager can run)
 - `herdr` → `~/.config/herdr/` (`config.toml` + `plugins.lock.json`)
-- `claude` → `~/.claude/` (`CLAUDE.md`, `settings.json`, `commands/`, `agents/`, `skills/`)
+- `claude` → `~/.claude/` (`CLAUDE.md`, `commands/`, `agents/`, `skills/`)
 - `pi` → `~/.pi/agent/` (`settings.json` + `AGENTS.md`)
 - `agents` → `~/.agents/skills/` (harness-agnostic skills, the [Agent Skills standard](https://agentskills.io) shared dir)
 - `workmux` → `~/.config/workmux/config.yaml` (only does anything on a tmux machine, see [workmux](#workmux))
@@ -95,7 +95,7 @@ The binary lands in `~/.local/bin` (pinned via `WORKMUX_INSTALL_DIR`, since the 
 
 `~/.config/workmux/config.yaml` is a stow symlink into this repo, so `workmux config edit` edits the committed file directly and shows up in `git diff`. Per-project overrides go in a `.workmux.yaml` at the project root (`workmux init`) and belong to that project, not here.
 
-**Run `workmux setup --hooks`, never `workmux setup`.** The hooks half writes the agent status-tracking glue — a pi extension at `~/.pi/agent/extensions/workmux-status.ts` (machine-local, gitignored, owned and versioned by workmux exactly like the herdr integrations) and the `set-window-status` / `register-agent` hooks in `claude/.claude/settings.json`, which are committed and already present. The skills half copies workmux's own `/merge`, `/rebase`, `/worktree`, `/coordinator`, `/open-pr` and `/workmux` skills into the harnesses' skill dirs. Those six already live here, edited, as [vendored skills](#agent-setup-pi--claude) — so `--skills` damages both harnesses, differently. For pi it writes fresh copies into `~/.pi/agent/skills`, which pi loads *ahead* of `~/.agents/skills`: the edited copies are silently shadowed and pi lists them under `[Skill conflicts]`. For claude it writes to `~/.claude/skills`, where each of those six names is a stow link into `agents/.agents/skills`, so upstream's copies are written through the links on top of the edited ones **in this repo**, visible only as a surprise `git diff`. It can't run from `install.sh` anyway: it refuses a non-interactive terminal.
+**Run `workmux setup --hooks`, never `workmux setup`.** The hooks half writes the agent status-tracking glue — a pi extension at `~/.pi/agent/extensions/workmux-status.ts` (machine-local, gitignored, owned and versioned by workmux exactly like the herdr integrations) and the `set-window-status` / `register-agent` hooks in `~/.claude/settings.json`, which is machine-local and not committed. The skills half copies workmux's own `/merge`, `/rebase`, `/worktree`, `/coordinator`, `/open-pr` and `/workmux` skills into the harnesses' skill dirs. Those six already live here, edited, as [vendored skills](#agent-setup-pi--claude) — so `--skills` damages both harnesses, differently. For pi it writes fresh copies into `~/.pi/agent/skills`, which pi loads *ahead* of `~/.agents/skills`: the edited copies are silently shadowed and pi lists them under `[Skill conflicts]`. For claude it writes to `~/.claude/skills`, where each of those six names is a stow link into `agents/.agents/skills`, so upstream's copies are written through the links on top of the edited ones **in this repo**, visible only as a surprise `git diff`. It can't run from `install.sh` anyway: it refuses a non-interactive terminal.
 
 `workmux-add` (in the `bin` package) is the popup bound to `prefix+G` in `tmux.conf`: it prompts for a name and runs `workmux add`.
 
@@ -151,12 +151,10 @@ harness — it's the multiplexer that hosts agent panes — so it has no part in
 its per-harness hook/extension glue is machine-local and installed by `herdr
 integration install` (step 10 of `install.sh`), not committed.
 
-One exception: for claude, that installer also *wires* its hook into
-`claude/.claude/settings.json`, which is committed. It writes an absolute path and
-matches an existing entry only by exact string, so it can't see the committed
-`$HOME` spelling of the same hook and appends a duplicate on every run. Step 10
-prunes that duplicate afterwards; the committed `$HOME` form is the one that
-survives, so no username lands in the repo.
+For claude, that installer also *wires* its hook into the machine-local
+`~/.claude/settings.json`. It matches an existing entry only by exact string, so a
+`$HOME` spelling of the same hook is not recognised and a duplicate is appended on
+every run. Step 10 prunes such duplicates afterwards, keeping the first spelling.
 
 **Instructions — one file, two names.** The canonical global instructions live in
 `agent-instructions/AGENTS.md`. The `claude` and `pi` packages don't copy it; they

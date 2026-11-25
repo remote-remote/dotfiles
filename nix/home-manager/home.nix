@@ -59,7 +59,7 @@
     sessionVariables = {
       EDITOR = "nvim";
       GOPATH = "$HOME/go";
-      PATH = "$HOME/go/bin:$HOME/bin:$HOME/.local/bin:$PATH";
+      PATH = "$HOME/go/bin:$HOME/.local/bin:$PATH";
     };
   };
 

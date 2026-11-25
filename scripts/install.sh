@@ -23,10 +23,9 @@ read_multiplexer() {
 
 # `herdr integration install claude` appends its SessionStart hook with an
 # absolute path and recognises an existing entry only by exact string match.
-# The committed settings.json spells the same hook with "$HOME" so no username
-# ends up in the repo, which herdr can't match — so each run appends a second
-# copy. Drop any hook entry that duplicates an earlier one once $HOME and shell
-# quoting are folded out, keeping the first (committed) spelling.
+# An existing entry spelled with "$HOME" is not matched, so each run can append
+# a second copy. Drop any hook entry that duplicates an earlier one once $HOME
+# and shell quoting are folded out, keeping the first spelling.
 prune_duplicate_claude_hooks() {
   local settings="$HOME/.claude/settings.json" pruned
   [ -f "$settings" ] || return 0
@@ -42,8 +41,7 @@ prune_duplicate_claude_hooks() {
     )
   ' "$settings")" || { echo "could not read $settings; skipping hook de-duplication" >&2; return 0; }
 
-  # Written in place, not moved: this path is a stow symlink into the repo and
-  # `mv` would replace it with a real file.
+  # Written in place, not moved, so a symlinked settings.json stays a symlink.
   printf '%s\n' "$pruned" > "$settings"
 }
 
@@ -170,7 +168,7 @@ if command -v nvm >/dev/null 2>&1; then
   npm install -g corepack
   # gh-axi, chrome-devtools-axi, and lavish-axi each add their own SessionStart
   # hook to ~/.claude/settings.json on every run unless one is already there.
-  # Those hooks are committed, so these installs leave the repo clean. They go
+  # settings.json is machine-local, so this does not touch the repo. They go
   # in a prefix outside nvm so they stay on PATH when a repo switches node
   # versions; zsh.nix puts its bin on PATH.
   npm install -g --prefix "$HOME/.local/share/npm-global" gh-axi chrome-devtools-axi lavish-axi tasks-axi quota-axi

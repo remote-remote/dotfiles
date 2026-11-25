@@ -4,11 +4,6 @@
     packages = with pkgs; [
       starship
     ];
-
-    sessionVariables = {
-      ZSH_CUSTOM = "$HOME/.oh-my-zsh/custom";
-    };
-
   };
 
   programs.zsh = {
@@ -39,7 +34,6 @@
       }
 
       autoload -U +X bashcompinit && bashcompinit
-      fpath=($fpath "$HOME/.zfunctions")
       if [[ -f ~/.config/zsh/local.zsh ]]; then
         source ~/.config/zsh/local.zsh
       else
@@ -62,11 +56,6 @@
 
       # npm globals that must survive `nvm use` (see step 6 of scripts/install.sh).
       export PATH="$HOME/.local/share/npm-global/bin:$PATH"
-
-      export PATH=~/.opencode/bin:$PATH
-
-      export BUN_INSTALL="$HOME/.bun"
-      export PATH="$BUN_INSTALL/bin:$PATH"
 
     '';
   };
