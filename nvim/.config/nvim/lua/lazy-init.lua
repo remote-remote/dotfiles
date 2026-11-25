@@ -11,6 +11,6 @@ if not vim.g.lazy_initialized then
     })
   end
   vim.opt.rtp:prepend(lazypath)
-  require("lazy").setup({ { import = "plugins" }, { import = "plugins/lsp" } })
+  require("lazy").setup({ { import = "plugins" } })
   vim.g.lazy_initialized = true
 end
