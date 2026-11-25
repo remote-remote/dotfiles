@@ -27,7 +27,7 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `nix` → `~/.config/nix/nix.conf` (enables `nix-command` + `flakes`; stowed first so home-manager can run)
 - `herdr` → `~/.config/herdr/` (`config.toml` + `plugins.lock.json`)
 - `claude` → `~/.claude/` (`CLAUDE.md`, `commands/`, `agents/`, `skills/`)
-- `pi` → `~/.pi/agent/` (`settings.json` + `AGENTS.md`)
+- `pi` → `~/.pi/agent/` (`settings.json`, `AGENTS.md`, `extensions/command-aliases.ts`)
 - `agents` → `~/.agents/skills/` (harness-agnostic skills, the [Agent Skills standard](https://agentskills.io) shared dir)
 - `workmux` → `~/.config/workmux/config.yaml` (only does anything on a tmux machine, see [workmux](#workmux))
 - `agent-instructions` is not stowed directly — it holds the one canonical
@@ -183,9 +183,9 @@ A skill that a harness creates on this machine is written as a real directory be
 **Settings stay separate.** The harness settings schemas differ
 (`~/.claude/settings.json` uses `permissions`/`enabledPlugins`; `~/.pi/agent/settings.json`
 uses `defaultProvider`/`defaultModel`), so they are *not* unified — each is committed
-in its own package. The `pi` package commits only `settings.json` and the `AGENTS.md`
-symlink; `pi/.pi/.gitignore` keeps the live churn (`sessions/`, `cache/`, `auth.json`,
-herdr's `extensions/`, `models-store.json`) out of the repo, the same discipline the
+in its own package. The `pi` package commits only `settings.json`, the `AGENTS.md`
+symlink, and the `command-aliases.ts` extension; `pi/.pi/.gitignore` keeps the live churn (`sessions/`, `cache/`, `auth.json`,
+the other (herdr, workmux) `extensions/`, `models-store.json`) out of the repo, the same discipline the
 `claude` package uses.
 
 **Work vs. home.** At work (claude only) stow `claude` + `agents`. At home (pi + claude)

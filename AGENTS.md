@@ -26,7 +26,7 @@ Stow packages mirror paths under `$HOME`. Editing an installed symlink edits the
 | `herdr` | `~/.config/herdr/` |
 | `workmux` | `~/.config/workmux/config.yaml` |
 | `claude` | Managed files and symlinks in `~/.claude/` |
-| `pi` | `~/.pi/agent/settings.json` and `~/.pi/agent/AGENTS.md` |
+| `pi` | `~/.pi/agent/settings.json`, `~/.pi/agent/AGENTS.md`, and `~/.pi/agent/extensions/command-aliases.ts` |
 | `agents` | `~/.agents/skills/` |
 
 New files may need `stow --restow <pkg>` from `~/dotfiles` to appear in `$HOME`. Files added inside an already symlinked directory appear immediately. A new skill directory needs `stow --restow agents claude`, because each skill is linked individually. Check the existing links before restowing.

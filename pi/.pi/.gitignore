@@ -1,5 +1,8 @@
 # ~/.pi/agent is a live working directory. Commit only the portable bits
-# (settings.json, AGENTS.md); everything else is machine-local churn.
+# (settings.json, AGENTS.md, owned extensions); everything else is machine-local churn.
 /agent/*
 !/agent/settings.json
 !/agent/AGENTS.md
+!/agent/extensions/
+/agent/extensions/*
+!/agent/extensions/command-aliases.ts
