@@ -7,7 +7,7 @@
 #   tab "agents"  a few bare shells (default 3); no agents are started
 #
 # With no directory, pick from what `sessionizer-dirs` offers -- the same
-# sessionizer.conf that tmux-sessionizer reads, whose entries are paths with an
+# sessionizer.conf that tmux-picker reads, whose entries are paths with an
 # optional :MIN:MAX search-depth suffix. See that script for the format.
 #
 #   SESSIONIZER_DIRS=(~/code:1:2 ~/dotfiles)

@@ -282,7 +282,7 @@ Next steps:
     in agents/.agents/skills.
   - Optional: create ~/.config/zsh/local.zsh for machine-local secrets/aliases.
   - Optional: create ~/.local/bin/sessionizer.conf that exports SESSIONIZER_DIRS
-    for tmux-sessionizer and herdr-sessionizer. Both read it through
+    for tmux-picker and herdr-sessionizer. Both read it through
     sessionizer-dirs, beside itself as invoked, so it stays out of the repo.
     Entries take a :MIN:MAX depth suffix; a bare path means that directory alone:
 

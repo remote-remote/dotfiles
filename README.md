@@ -23,7 +23,7 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `aerospace` → `~/.config/aerospace/`
 - `tmux` → `~/.config/tmux/` (plugins are installed by tpm into a gitignored subdir)
 - `nvim` → `~/.config/nvim/`
-- `bin` → `~/.local/bin/` (scripts: `ghpr`, `csvify`, `tmux-sessionizer`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-sessionizer`, `sessionizer-dirs`, `agent-skills`)
+- `bin` → `~/.local/bin/` (scripts: `tmux-picker`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-sessionizer`, `sessionizer-dirs`, `agent-skills`)
 - `nix` → `~/.config/nix/nix.conf` (enables `nix-command` + `flakes`; stowed first so home-manager can run)
 - `herdr` → `~/.config/herdr/` (`config.toml` + `plugins.lock.json`)
 - `claude` → `~/.claude/` (`CLAUDE.md`, `commands/`, `agents/`, `skills/`)
@@ -60,7 +60,7 @@ Reuse requires a label matching the directory basename *and* a live pane inside 
 selected root, so `~/code/go/api` and `~/code/ts/api` don't steal each other's
 workspace. Reuse leaves the existing layout and commands alone.
 
-Both `herdr-sessionizer` and `tmux-sessionizer` get their candidate directories from
+Both `herdr-sessionizer` and `tmux-picker` get their candidate directories from
 `sessionizer-dirs`, so the format lives in one place. It reads the machine-local,
 gitignored `sessionizer.conf` beside itself as invoked (`~/.local/bin`, not the
 checkout its symlink points at). `SESSIONIZER_DIRS` is a zsh array whose entries are
