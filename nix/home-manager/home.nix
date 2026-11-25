@@ -53,7 +53,6 @@
         source = ../../kitty/kitty.conf;
         onChange = "kill -SIGUSR1 $KITTY_PID";
       };
-      ".config/kitty/background.webp".source = ../../kitty/background.webp;
     };
 
     sessionVariables = {
