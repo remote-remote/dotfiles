@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh -f
 
 # ctrl-hjkl for herdr panes. Replaces herdr-splits' nav actions so the outer
 # pane edge hands off to AeroSpace instead of wrapping.
@@ -8,34 +8,63 @@
 # - other panes: unzoom, then focus the neighbour, or AeroSpace at the edge.
 #   A zoomed pane reports every edge, so unzoom has to happen first.
 #
+# Talks to the herdr server socket directly instead of running the herdr CLI:
+# endpoint security makes each herdr exec cost ~25 ms, a socket request <1 ms.
+# Requests omit pane_id, which the server resolves to the focused pane of the
+# active workspace.
+#
 # usage: herdr-nav <left|down|up|right>
 
-set -euo pipefail
+zmodload zsh/net/socket || exit 1
 
 dir=${1:?usage: herdr-nav <left|down|up|right>}
-herdr=${HERDR_BIN_PATH:-herdr}
 
 case $dir in
   left) key=ctrl+h ;;
   down) key=ctrl+j ;;
   up) key=ctrl+k ;;
   right) key=ctrl+l ;;
-  *) echo "herdr-nav: unknown direction: $dir" >&2; exit 2 ;;
+  *) print -u 2 "herdr-nav: unknown direction: $dir"; exit 2 ;;
 esac
 
-if "$herdr" pane process-info --current 2>/dev/null |
-  grep -qiE '"name"[[:space:]]*:[[:space:]]*"g?(view|l?n?vim?x?)(diff)?"'; then
-  pane=${HERDR_ACTIVE_PANE_ID:-$("$herdr" pane current --current | grep -o '"pane_id"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')}
-  exec "$herdr" pane send-keys "$pane" "$key"
+sock=${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}
+
+# Sends one request and leaves the single-line JSON reply in $REPLY. The server
+# closes the connection after each reply, so every request connects afresh.
+herdr_call() {
+  local method=$1 params=${2:-'{}'} fd
+  zsocket $sock || return 1
+  fd=$REPLY
+  print -r -u $fd -- "{\"id\":\"herdr-nav\",\"method\":\"$method\",\"params\":$params}"
+  read -r -t 1 -u $fd REPLY
+  exec {fd}>&-
+  if [[ $REPLY != '{"id":"herdr-nav","result":'* ]]; then
+    print -r -u 2 -- "herdr-nav: $method failed: $REPLY"
+    return 1
+  fi
+}
+
+herdr_call pane.process_info || exit 1
+info=$REPLY
+pane=${${info#*\"pane_id\":\"}%%\"*}
+
+procs=${info#*\"foreground_processes\":}
+while [[ $procs =~ '"name":"([^"]*)"' ]]; do
+  name=${(L)match[1]}
+  procs=${procs[MEND+1,-1]}
+  if [[ $name =~ '^g?(view|l?n?vim?x?)(diff)?$' ]]; then
+    herdr_call pane.send_keys "{\"pane_id\":\"$pane\",\"keys\":[\"$key\"]}"
+    exit
+  fi
+done
+
+herdr_call pane.edges || exit 1
+if [[ $REPLY == *'"zoomed":true'* ]]; then
+  herdr_call pane.zoom '{"mode":"off"}' || exit 1
+  herdr_call pane.edges || exit 1
 fi
 
-edges=$("$herdr" pane edges --current)
-if grep -q '"zoomed"[[:space:]]*:[[:space:]]*true' <<<"$edges"; then
-  "$herdr" pane zoom --off --current
-  edges=$("$herdr" pane edges --current)
+if [[ $REPLY == *"\"$dir\":true"* ]]; then
+  exec aerospace focus $dir
 fi
-
-if grep -q "\"$dir\"[[:space:]]*:[[:space:]]*true" <<<"$edges"; then
-  exec aerospace focus "$dir"
-fi
-exec "$herdr" pane focus --direction "$dir" --current
+herdr_call pane.focus_direction "{\"direction\":\"$dir\"}"
