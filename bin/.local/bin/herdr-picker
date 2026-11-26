@@ -1,0 +1,197 @@
+#!/usr/bin/env zsh
+
+# Pick a herdr workspace -- live ones first, then the directories
+# sessionizer-dirs offers -- and focus it, building a directory's workspace
+# with herdr-sessionizer when it isn't open yet.
+#
+# Meant to run in a herdr popup, where fzf fills the popup. The look follows
+# tmux-picker so the two multiplexers feel the same.
+#
+# A directory is shadowed by a workspace that herdr-sessionizer would reuse for
+# it: same basename label, with a live pane inside the directory.
+#
+#   ctrl-x  close the highlighted workspace (never the focused one)
+#
+# usage: herdr-picker
+
+set -euo pipefail
+
+SELF=${0:a}
+
+C_RESET=$'\e[0m'
+C_META=$'\e[38;5;3m'
+C_LIVE=$'\e[38;5;4m'
+
+tilde() { print -r -- "${1/#$HOME/~}" }
+
+# Rows are KIND \t ID \t PATH \t DISPLAY; fzf shows column 4 and acts on 1-3.
+# KIND is w (workspace, ID is its workspace_id) or d (directory, ID empty).
+read -r -d '' PY_LIST <<'PY' || true
+import json, os, sys
+
+home = os.path.expanduser("~")
+def tilde(p):
+    return "~" + p[len(home):] if p == home or p.startswith(home + os.sep) else p
+
+def inside(cwd, root):
+    return cwd == root or cwd.startswith(root.rstrip(os.sep) + os.sep)
+
+snap = json.load(sys.stdin)["result"]["snapshot"]
+dirs = [d for d in sys.argv[1].split("\n") if d]
+focused = snap.get("focused_workspace_id")
+workspaces = snap.get("workspaces", [])
+panes = snap.get("panes", [])
+
+# A workspace has no path of its own; use the first pane of its first tab.
+first_tab = {}
+for t in snap.get("tabs", []):
+    first_tab.setdefault(t["workspace_id"], t["tab_id"])
+def ws_path(wid):
+    ordered = [p for p in panes if p["tab_id"] == first_tab.get(wid)]
+    ordered += [p for p in panes if p["workspace_id"] == wid]
+    return next((p.get("cwd") or "" for p in ordered), "")
+
+# Mirrors herdr-sessionizer's reuse rule, so a shadowed dir focuses the same
+# workspace whether picked as a dir or as the workspace.
+def shadowed(d):
+    label = os.path.basename(d)
+    return any(
+        w["label"] == label
+        and any(p["workspace_id"] == w["workspace_id"] and inside(p.get("cwd") or "", d) for p in panes)
+        for w in workspaces
+    )
+
+rows = [("w", w["workspace_id"], w["label"], ws_path(w["workspace_id"]), w) for w in workspaces]
+rows += [("d", "", os.path.basename(d), d, None) for d in dirs if not shadowed(d)]
+
+width = min(max((len(r[2]) for r in rows), default=0), 28)
+
+E = "\x1b["
+RESET, DIM, META = E + "0m", E + "38;5;8m", E + "38;5;3m"
+AGENT = {
+    "working": (E + "38;5;3m", "◐ working"),
+    "blocked": (E + "38;5;1m", "■ blocked"),
+    "done":    (E + "38;5;2m", "✓ done"),
+    "idle":    (E + "38;5;8m", "· idle"),
+}
+AGENT_WIDTH = 9
+
+for kind, wid, name, path, w in rows:
+    if kind == "w":
+        icon, color = ("●", E + "1;38;5;2m") if wid == focused else ("○", E + "38;5;4m")
+        acolor, atext = AGENT.get(w.get("agent_status"), ("", ""))
+        meta = "%s%2d tab %s%-*s%s " % (META, w.get("tab_count", 0), acolor, AGENT_WIDTH, atext, DIM)
+    else:
+        icon, color = "", E + "38;5;7m"
+        meta = " " * (7 + AGENT_WIDTH + 1)
+    label = name if len(name) <= width else name[: width - 1] + "…"
+    print("%s\t%s\t%s\t%s%s %-*s%s  %s%s%s" % (kind, wid, path, color, icon, width, label, RESET, meta, tilde(path), RESET))
+PY
+
+list_rows() {
+  local dirs
+  dirs=$("${SELF:h}/sessionizer-dirs" 2>/dev/null) || dirs=""
+  herdr api snapshot | python3 -c "$PY_LIST" "$dirs"
+}
+
+# First line: the pane to show (the active tab's focused pane). Then the tab list.
+read -r -d '' PY_TABS <<'PY' || true
+import json, sys
+
+wid = sys.argv[1]
+snap = json.load(sys.stdin)["result"]["snapshot"]
+ws = next((w for w in snap.get("workspaces", []) if w["workspace_id"] == wid), None)
+if ws is None:
+    sys.exit(1)
+active = ws.get("active_tab_id")
+layout = next((l for l in snap.get("layouts", []) if l["tab_id"] == active), {})
+print(layout.get("focused_pane_id", ""))
+
+E = "\x1b["
+COLOR = {"working": "38;5;3", "blocked": "38;5;1", "done": "38;5;2", "idle": "38;5;8"}
+tabs = [t for t in snap.get("tabs", []) if t["workspace_id"] == wid]
+width = max((len(t["label"]) for t in tabs), default=0)
+print(E + "38;5;3mtabs" + E + "0m")
+for t in tabs:
+    mark = "▌" if t["tab_id"] == active else "│"
+    status = t.get("agent_status", "unknown")
+    agent = E + COLOR[status] + "m" + status + E + "0m" if status in COLOR else ""
+    print("  %s %d  %-*s  %d pane  %s" % (mark, t["number"], width, t["label"], t.get("pane_count", 0), agent))
+PY
+
+preview_workspace() {
+  local wid=$1 dirpath=$2 out pane
+  out=$(herdr api snapshot | python3 -c "$PY_TABS" "$wid") || return 0
+  pane=${out%%$'\n'*}
+  print -r -- "${out#*$'\n'}"
+  print
+  print -r -- "${C_META}$(tilde "$dirpath")${C_RESET}"
+  [[ -n $pane ]] || return 0
+  # Panes emit CRLF, and the visible screen pads with blank rows below the prompt.
+  herdr pane read "$pane" --source visible --ansi 2>/dev/null \
+    | tr -d '\r' | sed -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' | tail -n 40
+}
+
+preview_dir() {
+  local dirpath=$1
+  print -r -- "${C_META}$(tilde "$dirpath")${C_RESET}"
+  if git -C "$dirpath" rev-parse --git-dir >/dev/null 2>&1; then
+    print -r -- "  on ${C_LIVE}$(git -C "$dirpath" branch --show-current 2>/dev/null)${C_RESET}"
+    git -C "$dirpath" -c color.status=always status --short 2>/dev/null | head -n 15
+    print
+    git -C "$dirpath" -c color.ui=always log --oneline -n 10 2>/dev/null
+  else
+    ls -A "$dirpath" 2>/dev/null | head -n 30
+  fi
+}
+
+# Closing the focused workspace takes the popup down with it.
+close_workspace() {
+  local kind=$1 wid=$2 focused
+  [[ $kind == w && -n $wid ]] || return 0
+  focused=$(herdr api snapshot | python3 -c 'import json, sys; print(json.load(sys.stdin)["result"]["snapshot"].get("focused_workspace_id") or "")')
+  [[ $wid != "$focused" ]] || return 0
+  herdr workspace close "$wid" >/dev/null 2>&1 || true
+}
+
+case ${1-} in
+  --list) list_rows; exit 0 ;;
+  --preview)
+    if [[ ${2-} == w ]]; then preview_workspace "${3-}" "${4-}"; else preview_dir "${4-}"; fi
+    exit 0 ;;
+  --close) close_workspace "${2-}" "${3-}"; exit 0 ;;
+esac
+
+selected=$(list_rows | fzf \
+  --ansi \
+  --delimiter=$'\t' \
+  --with-nth=4 \
+  --layout=reverse \
+  --margin=0,1 \
+  --border=none \
+  --info=inline-right \
+  --prompt='  ' \
+  --pointer='▌' \
+  --highlight-line \
+  --scrollbar='│' \
+  --header=$'ctrl-x  close workspace\n' \
+  --color='fg:7,fg+:15,bg+:0,hl:4,hl+:4,info:8,prompt:4,pointer:4,header:8,gutter:-1,border:8,query:15' \
+  --preview="$SELF --preview {1} {2} {3}" \
+  --preview-window='right,55%,border-left,wrap' \
+  --bind="ctrl-x:execute-silent($SELF --close {1} {2})+reload($SELF --list)" \
+  --bind='ctrl-u:preview-up,ctrl-d:preview-down' \
+) || exit 0
+
+[[ -n $selected ]] || exit 0
+
+kind=${selected%%$'\t'*}
+rest=${selected#*$'\t'}
+wid=${rest%%$'\t'*}
+rest=${rest#*$'\t'}
+dirpath=${rest%%$'\t'*}
+
+if [[ $kind == w ]]; then
+  herdr workspace focus "$wid" >/dev/null
+else
+  "${SELF:h}/herdr-sessionizer" "$dirpath" >/dev/null
+fi

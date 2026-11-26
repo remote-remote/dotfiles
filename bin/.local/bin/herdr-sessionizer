@@ -6,11 +6,8 @@
 #   tab "run"     the project's server + a scratch shell, split top/bottom
 #   tab "agents"  a few bare shells (default 3); no agents are started
 #
-# With no directory, pick from what `sessionizer-dirs` offers -- the same
-# sessionizer.conf that tmux-picker reads, whose entries are paths with an
-# optional :MIN:MAX search-depth suffix. See that script for the format.
-#
-#   SESSIONIZER_DIRS=(~/code:1:2 ~/dotfiles)
+# With no directory, hand off to herdr-picker, which lists live workspaces and
+# the directories `sessionizer-dirs` offers, and calls back here with a dir.
 #
 # The selected directory is the root, even inside a repo or outside git entirely.
 # Reuse requires both a matching basename label and a live pane inside that root.
@@ -47,20 +44,7 @@ done
 
 [[ $AGENTS == <-> && $AGENTS -ge 1 ]] || { print -u2 "herdr-sessionizer: --agents needs a positive integer"; exit 2 }
 
-if [[ -z $DIR ]]; then
-  # Listed up front rather than piped straight into fzf: a malformed conf has to
-  # surface as its own exit status, not get flattened into fzf's "no matches".
-  CANDIDATES=$("${0:a:h}/sessionizer-dirs") || exit $?
-  [[ -n $CANDIDATES ]] || exit 0
-
-  DIR=$(print -rl -- "${(@f)CANDIDATES}" | fzf) || {
-    rc=$?
-    # fzf returns 1 for no matches, 130 for cancellation.
-    (( rc == 1 || rc == 130 )) && exit 0
-    exit "$rc"
-  }
-  [[ -n $DIR ]] || exit 0
-fi
+[[ -n $DIR ]] || exec "${0:a:h}/herdr-picker"
 
 ROOT=${DIR:A}
 [[ -d $ROOT ]] || { print -u2 "herdr-sessionizer: not a directory: $ROOT"; exit 1 }

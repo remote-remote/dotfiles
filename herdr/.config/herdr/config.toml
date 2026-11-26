@@ -152,11 +152,11 @@ key = "alt+l"
 type = "shell"
 command = "$HOME/.local/bin/herdr-nav resize right"
 
-# Directory picker / workspace builder
+# Workspace / directory picker
 [[keys.command]]
 key = "prefix+f"
 type = "popup"
-command = "$HOME/.local/bin/herdr-sessionizer"
+command = "$HOME/.local/bin/herdr-picker"
 width = "80%"
 height = "80%"
 
