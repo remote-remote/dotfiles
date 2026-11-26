@@ -1,0 +1,10 @@
+# Third-party skill bundles, installed machine-locally by `agent-skills bundles`
+# (run from install.sh). Their content is not kept in this repo.
+#
+#   <source> [skill ...]
+#
+# <source> is anything `npx skills add` accepts, such as a GitHub owner/repo.
+# List skill names to install only those; a bare source installs the whole bundle.
+# A skill that also exists in agents/.agents/skills is skipped: the repo copy wins.
+
+mattpocock/skills git-guardrails-claude-code grill-me grilling prototype research tdd teach to-spec wait-what writing-fragments

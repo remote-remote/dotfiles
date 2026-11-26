@@ -181,12 +181,12 @@ if have go; then
   go install github.com/remote-remote/flow@latest
 fi
 
-# 6b. Skill runtime deps. A few skills in agents/.agents/skills ship helper
+# 6b. Skill runtime deps. A skill in agents/.agents/skills may ship helper
 #     scripts with their own package.json; each keeps a committed lockfile and
 #     a gitignored node_modules, so every machine installs the same tree. The
-#     loop is generic on purpose — a future skill with a package.json is
-#     picked up with no edit here. browser-tools pulls puppeteer (downloads
-#     Chromium, a few hundred MB); SKIP_SKILL_DEPS=1 skips the whole step.
+#     loop is generic on purpose — a skill with a package.json is picked up
+#     with no edit here. No skill ships one today, so this is a no-op.
+#     SKIP_SKILL_DEPS=1 skips the whole step.
 if [ "${SKIP_SKILL_DEPS:-0}" != "1" ] && have npm; then
   for pkg_json in "$DOTFILES"/agents/.agents/skills/*/package.json; do
     [ -e "$pkg_json" ] || continue
@@ -205,6 +205,15 @@ if [ "${SKIP_SKILL_DEPS:-0}" != "1" ] && have npm; then
       (cd "$skill_dir" && npm install --silent) || echo "npm install failed for skill $skill_name" >&2
     fi
   done
+fi
+
+# 6c. Third-party skill bundles. Their sources are listed in
+#     scripts/skill-bundles.txt; the skills themselves are installed
+#     machine-locally beside the stow links and are not kept in this repo.
+if [ "${SKIP_SKILL_DEPS:-0}" != "1" ] && have npx; then
+  log "Installing third-party skill bundles"
+  "$DOTFILES/bin/.local/bin/agent-skills" bundles ||
+    echo "skill bundle install failed; re-run: agent-skills bundles" >&2
 fi
 
 # 7. Claude Code and pi — official installers. Both scripts detect an
@@ -275,11 +284,7 @@ cat <<'EOF'
 Next steps:
   - Open a new shell (or `exec zsh`) to pick up the home-manager environment.
   - On a tmux machine, run `workmux setup --hooks` once (it refuses a
-    non-interactive shell, so it can't run from here). Never `workmux setup`
-    bare or with --skills: that copies its own /merge, /rebase, /worktree,
-    /coordinator, /open-pr and /workmux skills into ~/.pi/agent/skills and
-    ~/.claude/skills, which shadows the edited copies this repo already owns
-    in agents/.agents/skills.
+    non-interactive shell, so it can't run from here).
   - Optional: create ~/.config/zsh/local.zsh for machine-local secrets/aliases.
   - Optional: create ~/.local/bin/sessionizer.conf that exports SESSIONIZER_DIRS
     for tmux-picker and herdr-sessionizer. Both read it through

@@ -32,6 +32,9 @@ class SessionizerTests(unittest.TestCase):
         self.set_snapshot([], [])
         self.script = self.bin / "herdr-sessionizer"
         shutil.copy2(REPO / "bin/.local/bin/herdr-sessionizer", self.script)
+        # The picker resolves sessionizer-dirs beside itself, and that script
+        # reads sessionizer.conf beside itself in turn.
+        shutil.copy2(REPO / "bin/.local/bin/sessionizer-dirs", self.bin / "sessionizer-dirs")
         self.env = dict(os.environ, HOME=str(self.home),
                         PATH=f"{self.bin}:{os.environ['PATH']}",
                         TEST_LOG=str(self.log), TEST_SNAPSHOT=str(self.snapshot),

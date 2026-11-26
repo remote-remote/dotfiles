@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 # Prompt for a worktree/branch name and hand it to `workmux add`.
-# Bound to `bind G display-popup -E -w 80% -h 80% "workmux-add"` in tmux.conf.
+# Bound to prefix+G in tmux.conf, in a display-popup.
 
 set -euo pipefail
 

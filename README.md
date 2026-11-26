@@ -10,7 +10,7 @@ Clone this repo to `~/dotfiles`, then run:
 ~/dotfiles/scripts/install.sh
 ```
 
-The script installs Xcode CLT, Homebrew + the Brewfile, Nix, stows the config packages below, runs home-manager, installs node/go globals, then tpm + tmux plugins and herdr plugins. It's idempotent — safe to re-run.
+The script installs Xcode CLT, Homebrew + the Brewfile, Nix, stows the config packages below, runs home-manager, installs node/go globals, Claude Code, pi and (on a tmux machine) workmux, then tpm + tmux plugins, herdr plugins and the herdr agent integrations. It's idempotent — safe to re-run.
 
 After it finishes, open a new shell so the home-manager environment is picked up.
 
@@ -23,7 +23,7 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `aerospace` → `~/.config/aerospace/`
 - `tmux` → `~/.config/tmux/` (plugins are installed by tpm into a gitignored subdir)
 - `nvim` → `~/.config/nvim/`
-- `bin` → `~/.local/bin/` (scripts: `tmux-picker`, `herdr-plugins`, `herdr-anchor`, `herdr-split`, `herdr-sessionizer`, `sessionizer-dirs`, `agent-skills`)
+- `bin` → `~/.local/bin/` (scripts: `tmux-picker`, `workmux-add`, `sessionizer-dirs`, `herdr-sessionizer`, `herdr-split`, `herdr-anchor`, `herdr-nav`, `herdr-plugins`, `herdr-agent-ctx`, `agent-skills`, `agent-scratch`, `stripnl`)
 - `nix` → `~/.config/nix/nix.conf` (enables `nix-command` + `flakes`; stowed first so home-manager can run)
 - `herdr` → `~/.config/herdr/` (`config.toml` + `plugins.lock.json`)
 - `claude` → `~/.claude/` (`CLAUDE.md`, `commands/`, `agents/`, `skills/`)
@@ -95,7 +95,9 @@ The binary lands in `~/.local/bin` (pinned via `WORKMUX_INSTALL_DIR`, since the 
 
 `~/.config/workmux/config.yaml` is a stow symlink into this repo, so `workmux config edit` edits the committed file directly and shows up in `git diff`. Per-project overrides go in a `.workmux.yaml` at the project root (`workmux init`) and belong to that project, not here.
 
-**Run `workmux setup --hooks`, never `workmux setup`.** The hooks half writes the agent status-tracking glue — a pi extension at `~/.pi/agent/extensions/workmux-status.ts` (machine-local, gitignored, owned and versioned by workmux exactly like the herdr integrations) and the `set-window-status` / `register-agent` hooks in `~/.claude/settings.json`, which is machine-local and not committed. The skills half copies workmux's own `/merge`, `/rebase`, `/worktree`, `/coordinator`, `/open-pr` and `/workmux` skills into the harnesses' skill dirs. Those six already live here, edited, as [vendored skills](#agent-setup-pi--claude) — so `--skills` damages both harnesses, differently. For pi it writes fresh copies into `~/.pi/agent/skills`, which pi loads *ahead* of `~/.agents/skills`: the edited copies are silently shadowed and pi lists them under `[Skill conflicts]`. For claude it writes to `~/.claude/skills`, where each of those six names is a stow link into `agents/.agents/skills`, so upstream's copies are written through the links on top of the edited ones **in this repo**, visible only as a surprise `git diff`. It can't run from `install.sh` anyway: it refuses a non-interactive terminal.
+**Run `workmux setup --hooks`.** The hooks half writes the agent status-tracking glue: a pi extension at `~/.pi/agent/extensions/workmux-status.ts` (machine-local, gitignored, owned and versioned by workmux exactly like the herdr integrations) and the `set-window-status` / `register-agent` hooks in `~/.claude/settings.json`, which is machine-local and not committed. It can't run from `install.sh`: it refuses a non-interactive terminal.
+
+The skills half (`workmux setup --skills`) copies workmux's own `/merge`, `/rebase`, `/worktree`, `/coordinator`, `/open-pr` and `/workmux` skills into `~/.pi/agent/skills` and `~/.claude/skills`. None of them are kept in this repo, so they land as machine-local skills. On claude the `workmux-status` plugin already supplies the same six, so `--skills` is only useful for pi.
 
 `workmux-add` (in the `bin` package) is the popup bound to `prefix+G` in `tmux.conf`: it prompts for a name and runs `workmux add`.
 
@@ -120,25 +122,16 @@ the same repo, so each is pinned twice — once here and once in `lazy-lock.json
 
 `~/.claude` is a live working directory — Claude Code keeps session transcripts, caches,
 plugin installs and `history.jsonl` there — so the package stows only the four things
-worth carrying between machines, and leaves the rest machine-local:
+worth carrying between machines, and leaves the rest machine-local, `settings.json` included:
 
 | path | what it is |
 | --- | --- |
 | `~/.claude/CLAUDE.md` | symlink → the shared `agent-instructions/AGENTS.md` (see [agent setup](#agent-setup-pi--claude)) |
-| `~/.claude/settings.json` | model, effort level, permissions, hooks, enabled plugins |
 | `~/.claude/commands/` | slash commands (`foo.md` → `/foo`) |
 | `~/.claude/agents/` | subagent definitions (`foo.md` → the `foo` agent type) |
 | `~/.claude/skills/` | real dir holding one link per skill in the shared `agents/.agents/skills/` dir, so pi and claude read the same `foo/SKILL.md` skills |
 
-Two things to know:
-
-- **Claude Code writes to `settings.json` itself** — `/config`, `/model`, installing a
-  plugin. Those writes land in this repo through the symlink, so they show up in
-  `git diff`. Good (nothing drifts silently), but check `git status` before committing,
-  and re-run `stow --restow claude` if a write ever replaces the symlink with a real file.
-- **`enabledPlugins` is committed, but the plugin *installs* are not** — they live in the
-  gitignored `~/.claude/plugins/`. On a fresh machine, run `/plugin` and install the
-  marketplace plugins listed in `settings.json`.
+`~/.claude/settings.json` is not committed. Claude Code rewrites it (`/config`, `/model`, plugin installs), and installers such as `herdr integration install claude` and the axi tools can append hooks to it, so it stays a real machine-local file. On a fresh machine, recreate it by hand: the `statusLine` command that feeds the herdr sidebar is `$HOME/.local/bin/herdr-agent-ctx statusline`, and plugins are reinstalled through `/plugin`.
 
 Machine-local secrets belong in `~/.claude/*.env` (not stowed, not committed), referenced
 from `settings.json` permissions by path.
@@ -178,12 +171,11 @@ the canonical file `AGENTS.md` is the vendor-neutral choice. Edit either end and
 ~/.claude/skills/foo  → claude/.claude/skills/foo → agents/.agents/skills/foo   (claude)
 ```
 
-A skill that a harness creates on this machine is written as a real directory beside those links, so it stays machine-local and never reaches the repo. To share it, move it into `agents/.agents/skills/` and re-stow.
+A skill that a harness creates on this machine, or that a [third-party bundle](#agent-setup-pi--claude) installs, is written as a real directory beside those links, so it stays machine-local and never reaches the repo. To share it, move it into `agents/.agents/skills/` and re-stow.
 
 **Settings stay separate.** The harness settings schemas differ
 (`~/.claude/settings.json` uses `permissions`/`enabledPlugins`; `~/.pi/agent/settings.json`
-uses `defaultProvider`/`defaultModel`), so they are *not* unified — each is committed
-in its own package. The `pi` package commits only `settings.json`, the `AGENTS.md`
+uses `defaultProvider`/`defaultModel`), so they are *not* unified. pi's is committed in the `pi` package; claude's is machine-local (see [claude config](#claude-config)). The `pi` package commits only `settings.json`, the `AGENTS.md`
 symlink, and the `command-aliases.ts` extension; `pi/.pi/.gitignore` keeps the live churn (`sessions/`, `cache/`, `auth.json`,
 the other (herdr, workmux) `extensions/`, `models-store.json`) out of the repo, the same discipline the
 `claude` package uses.
@@ -194,28 +186,26 @@ packages you stow differs.
 
 **Adding a skill.** Drop a `<name>/SKILL.md` folder in `agents/.agents/skills/`, then run `stow --restow agents claude` to link it into both harness dirs. Restowing also removes the links for skills deleted from the repo. `agent-skills wiring` reports any repo skill that is not linked yet.
 
-**Vendored skills.** Some skills came from elsewhere and were copied in, not linked or
-submoduled: they're short enough to read, and the point is to edit them for my own use.
-Once copied they're mine — no upstream sync, `git log` is the history. Origins, so a
-future diff against upstream is still possible:
+**Third-party bundles.** Only skills I wrote or forked live in `agents/.agents/skills/`. Bundles from elsewhere are installed machine-locally with the [`skills` CLI](https://github.com/vercel-labs/skills), and the repo records just their sources in `scripts/skill-bundles.txt`:
 
-| skills | upstream | copied at |
-| --- | --- | --- |
-| `brave-search`, `browser-tools`, `gccli`, `gdcli`, `gmcli`, `transcribe`, `youtube-transcript` | [badlogic/pi-skills](https://github.com/badlogic/pi-skills) | `90bb51c` (2026-06-06) |
-| `coordinator`, `merge`, `open-pr`, `rebase`, `workmux`, `worktree` | [raine/workmux](https://github.com/raine/workmux/tree/main/skills), via `workmux setup --skills` | `e2aa11d` (2026-09-14) |
+```
+mattpocock/skills grilling tdd to-spec ...
+```
 
-Those seven are the ones worth having here; upstream's `vscode` skill is skipped (this is
-a neovim setup). The six workmux skills are the reason `workmux setup` must always be run
-as `workmux setup --hooks` — see [workmux](#workmux). `brave-search` and `transcribe` want API keys; those belong in
-`~/.config/zsh/local.zsh`, never the repo.
+Each line is a source followed by the skills to take from it; a bare source takes the whole bundle. `agent-skills bundles` (run by step 6c of `install.sh`) installs whatever is missing. Each skill becomes a real directory in `~/.agents/skills` with a link from `~/.claude/skills`, beside the stow links, so both harnesses see it and nothing reaches the repo. The CLI tracks versions in the machine-local `~/.agents/.skill-lock.json`:
 
-A skill that ships helper scripts is a self-contained npm project: its `package.json` and
-`package-lock.json` are committed, its `node_modules` is ignored by a `.gitignore` in the
-skill's own folder (not a root glob, so the folder stays portable if it's ever copied
-out). Step 6b of `install.sh` walks every skill with a `package.json` and runs `npm ci`,
-skipping ones whose `node_modules` is already newer than both manifests — so it's cheap to
-re-run and still picks up a lockfile bump. `SKIP_SKILL_DEPS=1` skips the step entirely;
-worth it when you don't want `browser-tools` dragging in puppeteer + Chromium.
+```sh
+agent-skills bundles           # install what the manifest lists and this machine lacks
+npx skills ls -g               # what is installed, and from where
+npx skills update -g           # pull newer upstream versions
+npx skills remove -g -s NAME   # drop one; also delete it from the manifest
+```
+
+To try a new bundle, add a line to the manifest and run `agent-skills bundles`. To end the trial, remove its skills with `npx skills remove` and delete the line.
+
+A skill that exists in the repo is never installed from a bundle: its name in `~/.agents/skills` is a stow link, so the CLI would write upstream's copy through the link into this repo. `agent-skills bundles` skips such names. `diagnosing-bugs` and `handoff` are forks of `mattpocock/skills` (copied at `3cca18b`, 2026-09-04) that carry local edits, which is why they stay in the repo and are absent from the manifest.
+
+If a repo skill ever ships helper scripts, it is a self-contained npm project: commit its `package.json` and `package-lock.json`, and ignore its `node_modules` with a `.gitignore` in the skill's own folder. Step 6b of `install.sh` runs `npm ci` for every skill with a `package.json`. `SKIP_SKILL_DEPS=1` skips that step.
 
 `herdr/SKILL.md` is a pointer, not a copy. herdr ships its own agent instructions inside
 the binary (`herdr --skill`), so the committed file keeps only the vendor's frontmatter —
@@ -236,6 +226,7 @@ agent-skills lint       # validate every SKILL.md (name rules, description prese
 agent-skills wiring      # stow symlinks resolve to the repo; skills dirs and ~/.pi/agent not folded
 agent-skills probe NAME  # launch pi AND claude, load /skill:NAME, report hit/miss (costs API calls)
 agent-skills all NAME    # lint + wiring, then probe NAME
+agent-skills bundles     # install third-party bundles (see "Third-party bundles" above)
 ```
 
 The layers map to the failure modes: **lint** catches authoring mistakes without a harness (it reimplements the Agent Skills frontmatter rules, so a malformed skill fails here in milliseconds instead of silently not loading later). **wiring** catches a broken or folded symlink after a re-stow, including the folding trap, by asserting that `~/.pi/agent`, `~/.agents/skills` and `~/.claude/skills` are real directories. For each skills dir it also reports repo skills that are unlinked or shadowed by a local copy, dangling links left by a deleted skill, and the machine-local skills it found. **probe** is the only layer that spends tokens: it invokes each harness's slash command (`/skill:NAME` in pi, `/NAME` in claude) and checks the harness found the skill rather than answering "not available" / "unknown command". `lint` and `wiring` exit non-zero on failure, so `agent-skills` drops into a commit hook or CI step cleanly.

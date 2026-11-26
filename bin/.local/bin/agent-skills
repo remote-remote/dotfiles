@@ -7,14 +7,17 @@
 #   agent-skills wiring     check the stow symlinks resolve to the repo sources
 #   agent-skills probe NAME load skill NAME in each harness and report hit/miss
 #   agent-skills all NAME   lint + wiring, then probe NAME
+#   agent-skills bundles    install the third-party bundles in scripts/skill-bundles.txt
 #
 # lint/wiring need no network. probe launches pi and claude (costs API calls).
+# bundles downloads from each bundle's source through `npx skills`.
 
 set -uo pipefail
 
 SKILLS_DIR="${AGENT_SKILLS_DIR:-$HOME/.agents/skills}"
 CANON_INSTRUCTIONS="agent-instructions/AGENTS.md"   # basename we expect at the end of both chains
 CANON_SKILLS="${DOTFILES:-$HOME/dotfiles}/agents/.agents/skills"
+BUNDLES_FILE="${AGENT_SKILL_BUNDLES:-${DOTFILES:-$HOME/dotfiles}/scripts/skill-bundles.txt}"
 
 green() { printf '\033[32m%s\033[0m' "$1"; }
 red()   { printf '\033[31m%s\033[0m' "$1"; }
@@ -171,15 +174,49 @@ cmd_probe() {
   else warn "claude not installed; skipping"; fi
 }
 
+# --- bundles: third-party skills, installed beside the repo's links ----------
+# `skills add -g` writes each skill as a real directory in ~/.agents/skills and
+# links it into ~/.claude/skills. A name the repo already owns is a stow link
+# there, and installing over it would write upstream's copy into the repo.
+cmd_bundles() {
+  head_ "bundles — third-party skills from $BUNDLES_FILE"
+  [ -f "$BUNDLES_FILE" ] || { fail "no bundle manifest at $BUNDLES_FILE"; return; }
+  command -v npx >/dev/null 2>&1 || { fail "npx not on PATH"; return; }
+
+  local source skills skill
+  while read -r source skills; do
+    case "$source" in ""|\#*) continue ;; esac
+    if [ -z "$skills" ]; then
+      npx --yes skills add "$source" -g -a claude-code pi -s '*' -y </dev/null \
+        && pass "$source (whole bundle)" || fail "$source did not install"
+      continue
+    fi
+    local -a wanted=()
+    for skill in $skills; do
+      if [ -e "$CANON_SKILLS/$skill" ]; then
+        warn "$source $skill skipped: the repo has its own copy"
+      elif [ -e "$SKILLS_DIR/$skill" ]; then
+        pass "$source $skill already installed"
+      else
+        wanted+=("$skill")
+      fi
+    done
+    [ "${#wanted[@]}" -gt 0 ] || continue
+    npx --yes skills add "$source" -g -a claude-code pi -s "${wanted[@]}" -y </dev/null \
+      && pass "$source installed: ${wanted[*]}" || fail "$source did not install: ${wanted[*]}"
+  done < "$BUNDLES_FILE"
+}
+
 case "${1:-}" in
+  bundles) cmd_bundles ;;
   lint)   cmd_lint ;;
   wiring) cmd_wiring ;;
   probe)  cmd_probe "${2:-}" ;;
   all)    cmd_lint; cmd_wiring; cmd_probe "${2:-}" ;;
   ""|check) cmd_lint; cmd_wiring ;;
   -h|--help|help)
-    sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//' ;;
-  *) echo "unknown command: $1 (try: lint | wiring | probe <name> | all <name>)" >&2; exit 2 ;;
+    sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) echo "unknown command: $1 (try: lint | wiring | probe <name> | all <name> | bundles)" >&2; exit 2 ;;
 esac
 
 [ "$FAILED" = 0 ] || exit 1
