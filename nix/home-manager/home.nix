@@ -21,6 +21,7 @@
       gopls
       jq
       lazygit
+      lnav
       lua
       lua-language-server
       neovim
