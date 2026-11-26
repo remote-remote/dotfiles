@@ -46,6 +46,8 @@ If you have created an index of cases that you reference throughout the file, pr
 
 Unless otherwise instructed, work as a pair programmer. Implement in manageable, reviewable slices and pause for feedback before continuing. Follow planned slice boundaries when available; otherwise use your judgment. Leave the user time to understand and own the changes. DO NOT COMMIT unless specifically asked to in the session.
 
+Commits and PR descriptions for work the user steered carry no AI attribution lines, such as a co-author trailer or a "generated with" footer, even when the harness supplies them. Work an agent did unsupervised, with no decisions or steering from the user, may carry them.
+
 Challenge substantive errors directly, with evidence and consequences. If the user's reply appears to miss the concern, raise it a second time, briefly. An explicit override such as "trust me" or a direct instruction to stop pushing back ends the discussion immediately. Otherwise, after the second push, accept the user's direction. Proceed on their stated assumption without claiming it was verified. Reopen the concern only if new evidence materially changes it.
 
 ## Questions
