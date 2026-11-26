@@ -114,9 +114,11 @@ herdr-plugins sync     # install/enable to match the lockfile (run by install.sh
 herdr-plugins lock     # after adding/updating a plugin, then commit the lockfile
 ```
 
-Note: `herdr-splits` and `herdr-nvim` ship **both** a herdr plugin and a Neovim plugin from
-the same repo, so each is pinned twice — once here and once in `lazy-lock.json`. Re-run
-`herdr-plugins lock` after `:Lazy update` (or vice versa) so the two commits don't drift.
+No herdr plugins are installed at the moment, so the lockfile is `[]`. `herdr-plugins lock` refuses to write an empty lockfile, so reset it by hand after removing the last plugin.
+
+### herdr navigation
+
+`ctrl+hjkl` moves focus and `alt+hjkl` resizes across Neovim splits, herdr panes and AeroSpace windows, without plugins. `herdr-nav` (in the `bin` package) handles the herdr side: in a Neovim pane it forwards the chord, otherwise it focuses or resizes the herdr pane, or hands off to AeroSpace at the outer edge. `navigate.nvim`, a local plugin in `nvim/.config/nvim/local/`, handles the Neovim side and calls back into herdr at its edge. Both talk to the herdr server socket (`~/.config/herdr/herdr.sock`, one JSON request per connection) instead of running the `herdr` CLI, because endpoint security makes each `herdr` launch cost ~25 ms.
 
 ### claude config
 

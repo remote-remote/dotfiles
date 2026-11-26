@@ -1,29 +1,36 @@
 #!/bin/zsh -f
 
-# ctrl-hjkl for herdr panes. Replaces herdr-splits' nav actions so the outer
-# pane edge hands off to AeroSpace instead of wrapping.
+# ctrl-hjkl / alt-hjkl for herdr panes: focus or resize across nvim splits,
+# herdr panes and AeroSpace windows.
 #
-# - nvim pane: forward the chord; herdr-splits.nvim moves splits/panes and calls
-#   its at_edge handler (AeroSpace) when both are exhausted.
-# - other panes: unzoom, then focus the neighbour, or AeroSpace at the edge.
-#   A zoomed pane reports every edge, so unzoom has to happen first.
+# - nvim pane: forward the chord. The nvim-side half, navigate.nvim
+#   (nvim/.config/nvim/local/navigate.nvim), moves or resizes splits and calls
+#   back into herdr at its edge, so these chords are the contract between them.
+# - other panes, focus: unzoom, then focus the neighbour, or AeroSpace at the
+#   edge. A zoomed pane reports every edge, so unzoom has to happen first.
+# - other panes, resize: resize the herdr pane.
 #
 # Talks to the herdr server socket directly instead of running the herdr CLI:
 # endpoint security makes each herdr exec cost ~25 ms, a socket request <1 ms.
 # Requests omit pane_id, which the server resolves to the focused pane of the
 # active workspace.
 #
-# usage: herdr-nav <left|down|up|right>
+# usage: herdr-nav [resize] <left|down|up|right>
 
 zmodload zsh/net/socket || exit 1
 
-dir=${1:?usage: herdr-nav <left|down|up|right>}
+mod=ctrl
+if [[ $1 == resize ]]; then
+  mod=alt
+  shift
+fi
+dir=${1:?usage: herdr-nav [resize] <left|down|up|right>}
 
 case $dir in
-  left) key=ctrl+h ;;
-  down) key=ctrl+j ;;
-  up) key=ctrl+k ;;
-  right) key=ctrl+l ;;
+  left) key=$mod+h ;;
+  down) key=$mod+j ;;
+  up) key=$mod+k ;;
+  right) key=$mod+l ;;
   *) print -u 2 "herdr-nav: unknown direction: $dir"; exit 2 ;;
 esac
 
@@ -57,6 +64,11 @@ while [[ $procs =~ '"name":"([^"]*)"' ]]; do
     exit
   fi
 done
+
+if [[ $mod == alt ]]; then
+  herdr_call pane.resize "{\"direction\":\"$dir\",\"amount\":0.03}"
+  exit
+fi
 
 herdr_call pane.edges || exit 1
 if [[ $REPLY == *'"zoomed":true'* ]]; then

@@ -110,7 +110,8 @@ key = "prefix+minus"
 type = "shell"
 command = "$HOME/.local/bin/herdr-split down"
 
-# Pane focus: nvim splits -> herdr panes -> AeroSpace windows (see bin/.local/bin/herdr-nav)
+# Pane focus (ctrl) and resize (alt): nvim splits -> herdr panes -> AeroSpace windows
+# (see bin/.local/bin/herdr-nav)
 [[keys.command]]
 key = "ctrl+h"
 type = "shell"
@@ -133,36 +134,23 @@ command = "$HOME/.local/bin/herdr-nav right"
 
 [[keys.command]]
 key = "alt+h"
-type = "plugin_action"
-command = "herdr-splits.resize-left"
+type = "shell"
+command = "$HOME/.local/bin/herdr-nav resize left"
 
 [[keys.command]]
 key = "alt+j"
-type = "plugin_action"
-command = "herdr-splits.resize-down"
+type = "shell"
+command = "$HOME/.local/bin/herdr-nav resize down"
 
 [[keys.command]]
 key = "alt+k"
-type = "plugin_action"
-command = "herdr-splits.resize-up"
+type = "shell"
+command = "$HOME/.local/bin/herdr-nav resize up"
 
 [[keys.command]]
 key = "alt+l"
-type = "plugin_action"
-command = "herdr-splits.resize-right"
-
-# NVIM AGENTS
-[[keys.command]]
-key = "prefix+e"
-type = "plugin_action"
-command = "chmarax.herdr-nvim.toggle"
-description = "nvim sidebar"
-
-[[keys.command]]
-key = "prefix+o"
-type = "plugin_action"
-command = "chmarax.herdr-nvim.pick-file"
-description = "open file from agent output"
+type = "shell"
+command = "$HOME/.local/bin/herdr-nav resize right"
 
 # Directory picker / workspace builder
 [[keys.command]]

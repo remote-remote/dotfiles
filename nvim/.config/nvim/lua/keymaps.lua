@@ -7,10 +7,7 @@ vim.keymap.set("n", "<M-Tab>", ":bn<CR>")
 vim.keymap.set("n", "<M-S-Tab>", ":bp<CR>")
 vim.keymap.set("n", "<leader>w", ":bd<CR>")
 
--- split / pane / window navigation
-for key, side in pairs({ h = "left", j = "down", k = "up", l = "right" }) do
-  vim.keymap.set("n", "<C-" .. key .. ">", function() require("navigate").move(side) end, { desc = "Navigate " .. side })
-end
+-- split / pane / window navigation and resize: plugins/navigate.lua
 
 -- remove search highlight
 vim.keymap.set("n", "<leader>/", ":noh<CR>")
