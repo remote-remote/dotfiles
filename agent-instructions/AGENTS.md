@@ -42,6 +42,8 @@ Keep each prose paragraph on one source line. Preserve the line breaks required 
 
 If you have created an index of cases that you reference throughout the file, prefer a human readable name over a code. If the reference is hard to put in a couple of words, use the code but always create internal links to the definition so the human can figure out what you are talking about.
 
+When a review board (such as a Lavish artifact) contains a decision for the user or an action you could take, make it answerable on the board. Give each decision its options as controls that queue one specific answer, and each action list checkboxes that queue the selected set with stable IDs. Show whether each answer is queued or has changed since. Leave a statement as plain text only when there is nothing for the user to choose.
+
 ## Division of Labor
 
 Unless otherwise instructed, work as a pair programmer. Implement in manageable, reviewable slices and pause for feedback before continuing. Follow planned slice boundaries when available; otherwise use your judgment. Leave the user time to understand and own the changes. DO NOT COMMIT unless specifically asked to in the session.
