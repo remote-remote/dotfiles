@@ -7,7 +7,7 @@
 set -euo pipefail
 
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
-STOW_PACKAGES=(nix aerospace tmux nvim bin herdr claude pi agents workmux)
+STOW_PACKAGES=(nix aerospace tmux nvim bin herdr rex claude pi agents workmux)
 
 log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
@@ -127,7 +127,7 @@ done
 
 mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.claude" \
   "$HOME/.config/herdr" "$HOME/.config/tmux" "$HOME/.config/aerospace" \
-  "$HOME/.config/nvim" "$HOME/.config/nix" "$HOME/.config/workmux" \
+  "$HOME/.config/nvim" "$HOME/.config/nix" "$HOME/.config/workmux" "$HOME/.config/rex" \
   "$HOME/.pi/agent" "$HOME/.agents/skills" "$HOME/.claude/skills"
 
 for pkg in "${STOW_PACKAGES[@]}"; do

@@ -26,6 +26,7 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `bin` → `~/.local/bin/` (scripts: `tmux-picker`, `workmux-add`, `sessionizer-dirs`, `herdr-sessionizer`, `herdr-split`, `herdr-anchor`, `herdr-nav`, `herdr-plugins`, `herdr-agent-ctx`, `agent-skills`, `agent-scratch`, `stripnl`)
 - `nix` → `~/.config/nix/nix.conf` (enables `nix-command` + `flakes`; stowed first so home-manager can run)
 - `herdr` → `~/.config/herdr/` (`config.toml` + `plugins.lock.json`)
+- `rex` → `~/.config/rex/init.lua` (keys and actions for the Rex multiplexer; its ctrl-hjkl navigation pairs with navigate.nvim)
 - `claude` → `~/.claude/` (`CLAUDE.md`, `commands/`, `agents/`, `skills/`)
 - `pi` → `~/.pi/agent/` (`settings.json`, `AGENTS.md`, `extensions/command-aliases.ts`)
 - `agents` → `~/.agents/skills/` (harness-agnostic skills, the [Agent Skills standard](https://agentskills.io) shared dir)
@@ -33,7 +34,7 @@ Stowed from `~/dotfiles` into `$HOME`:
 - `agent-instructions` is not stowed directly — it holds the one canonical
   `AGENTS.md` that the `claude` and `pi` packages both symlink to (see [agent setup](#agent-setup-pi--claude)).
 
-To re-stow everything: `cd ~/dotfiles && stow --restow aerospace tmux nvim bin nix herdr claude pi agents workmux`.
+To re-stow everything: `cd ~/dotfiles && stow --restow aerospace tmux nvim bin nix herdr rex claude pi agents workmux`.
 
 ### herdr workspaces
 

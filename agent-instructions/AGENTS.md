@@ -11,7 +11,7 @@ Work with the user as an experienced software engineer. Establish the relevant b
 
 Before editing personal configuration, shared agent instructions, or skills, read `~/dotfiles/AGENTS.md` and edit the source of truth.
 
-- Stow-managed paths: `~/.config/{aerospace,tmux,nvim,nix,herdr,workmux}`, `~/.local/bin`, `~/.claude`, `~/.pi/agent`, and `~/.agents/skills`. Some contain machine-local files alongside managed files.
+- Stow-managed paths: `~/.config/{aerospace,tmux,nvim,nix,herdr,rex,workmux}`, `~/.local/bin`, `~/.claude`, `~/.pi/agent`, and `~/.agents/skills`. Some contain machine-local files alongside managed files.
 - Home-manager generated paths: `~/.zshrc` and `~/.config/kitty/*`.
 
 These global instructions are shared across harnesses. Keep them harness-neutral.

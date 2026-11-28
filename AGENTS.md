@@ -24,6 +24,7 @@ Stow packages mirror paths under `$HOME`. Editing an installed symlink edits the
 | `bin` | `~/.local/bin/` |
 | `nix` | `~/.config/nix/nix.conf` |
 | `herdr` | `~/.config/herdr/` |
+| `rex` | `~/.config/rex/init.lua` |
 | `workmux` | `~/.config/workmux/config.yaml` |
 | `claude` | Managed files and symlinks in `~/.claude/` |
 | `pi` | `~/.pi/agent/settings.json`, `~/.pi/agent/AGENTS.md`, and `~/.pi/agent/extensions/command-aliases.ts` |

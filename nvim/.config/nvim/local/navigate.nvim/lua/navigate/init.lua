@@ -1,5 +1,5 @@
 -- Moves focus and resizes across nested layers: nvim splits, then the
--- enclosing multiplexer (herdr or tmux), then AeroSpace windows. Each layer
+-- enclosing multiplexer (herdr, tmux or Rex), then AeroSpace windows. Each layer
 -- hands off to the next at its edge.
 --
 -- The herdr-side half is bin/.local/bin/herdr-nav in ~/dotfiles. It forwards
@@ -9,6 +9,7 @@ local M = {}
 
 local herdr = require("navigate.herdr")
 local tmux = require("navigate.tmux")
+local rex = require("navigate.rex")
 local aerospace = require("navigate.aerospace")
 
 local wincmd = { left = "h", down = "j", up = "k", right = "l" }
@@ -21,6 +22,9 @@ local function multiplexer()
     return herdr
   elseif tmux.in_session() then
     return tmux
+  elseif rex.in_session() then
+    -- Last: a herdr or tmux running inside Rex is the nearer layer.
+    return rex
   end
 end
 
